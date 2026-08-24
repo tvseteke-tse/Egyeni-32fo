@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Egyéni Teke - Adminisztráció</title>
+<style>
+    body { font-family: sans-serif; background: #121212; color: white; padding: 15px; margin: 0; }
+    .header-panel { margin-bottom: 20px; text-align: center; }
+    .header-panel input {
+        font-size: 1.4rem; padding: 8px 12px; width: 80%; max-width: 500px;
+        background: #2a2a2a; border: 2px solid #3fb950; color: #ffff00;
+        font-weight: bold; border-radius: 6px; text-align: center;
+    }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 12px; }
+    .card { background: #1e1e1e; padding: 10px; border-radius: 6px; border: 1px solid #333; }
+    .card-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; color: #8b949e; }
+    .row { display: flex; gap: 5px; align-items: center; margin-bottom: 6px; }
+    input[type="text"].p-name { flex: 1; background: #2a2a2a; border: 1px solid #444; color: white; padding: 6px; border-radius: 4px; font-weight: bold; }
+    .stats-inputs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; background: #252525; padding: 6px; border-radius: 4px; }
+    .set-box { display: flex; flex-direction: column; gap: 3px; background: #1a1a1a; padding: 4px; border-radius: 4px; text-align: center; }
+    .set-box label { font-size: 0.75rem; color: #3fb950; font-weight: bold; }
+    .set-box input { width: 90%; background: #2a2a2a; border: 1px solid #444; color: white; padding: 4px 0; text-align: center; border-radius: 3px; font-size: 0.85rem; margin: 0 auto; }
+</style>
+</head>
+<body>
+
+<div class="header-panel">
+    <input type="text" id="tournamentTitle" value="Egyéni Bajnokság" placeholder="Bajnokság / Verseny Neve" oninput="sendData()">
+</div>
+
+<div class="grid" id="playersContainer"></div>
+
+<script>
+const channel = new BroadcastChannel('egyeni_bowling');
+const totalPlayers = 32;
+
+function init() {
+    const container = document.getElementById('playersContainer');
+    for (let i = 0; i < totalPlayers; i++) {
+        container.innerHTML += `
+            <div class="card">
+                <div class="card-header">
+                    <span>#${i + 1} Játékos</span>
+                </div>
+                <div class="row">
+                    <input type="text" class="p-name" placeholder="Játékos neve" oninput="sendData()">
+                </div>
+                <div class="stats-inputs">
+                    ${[0,1,2,3].map(s => `
+                        <div class="set-box">
+                            <label>S${s+1}</label>
+                            <input type="number" class="p-teli${s}" placeholder="Teli" oninput="sendData()">
+                            <input type="number" class="p-tarol${s}" placeholder="Tar" oninput="sendData()">
+                            <input type="number" class="p-ures${s}" placeholder="Üres" oninput="sendData()">
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    sendData();
+}
+
+function sendData() {
+    const title = document.getElementById('tournamentTitle').value || 'Egyéni Bajnokság';
+    const players = [];
+    const cards = document.querySelectorAll('.card');
+
+    cards.forEach((card, idx) => {
+        const name = card.querySelector('.p-name').value;
+        
+        let totalTeli = 0;
+        let totalTarol = 0;
+        let totalUres = 0;
+        const sets = [];
+
+        for (let s = 0; s < 4; s++) {
+            const teli = parseInt(card.querySelector(`.p-teli${s}`).value) || 0;
+            const tarol = parseInt(card.querySelector(`.p-tarol${s}`).value) || 0;
+            const ures = parseInt(card.querySelector(`.p-ures${s}`).value) || 0;
+
+            totalTeli += teli;
+            totalTarol += tarol;
+            totalUres += ures;
+
+            sets.push(teli + tarol);
+        }
+
+        const total = totalTeli + totalTarol;
+
+        players.push({
+            id: idx + 1,
+            name: name || `Játékos ${idx + 1}`,
+            sets: sets,
+            teli: totalTeli,
+            tarol: totalTarol,
+            ures: totalUres,
+            total: total
+        });
+    });
+
+    channel.postMessage({ title: title, players: players });
+}
+
+init();
+</script>
+</body>
+</html>
