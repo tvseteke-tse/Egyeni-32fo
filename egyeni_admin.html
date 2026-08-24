@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Egyéni Teke - Adminisztráció</title>
+<title>Egyéni Teke - Adminisztráció (Online)</title>
 <style>
     body { font-family: sans-serif; background: #121212; color: white; padding: 15px; margin: 0; }
     .header-panel { margin-bottom: 20px; text-align: center; }
@@ -22,6 +22,10 @@
     .set-box label { font-size: 0.75rem; color: #3fb950; font-weight: bold; }
     .set-box input { width: 90%; background: #2a2a2a; border: 1px solid #444; color: white; padding: 4px 0; text-align: center; border-radius: 3px; font-size: 0.85rem; margin: 0 auto; }
 </style>
+
+<!-- Firebase SDK-k -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -32,11 +36,24 @@
 <div class="grid" id="playersContainer"></div>
 
 <script>
-const channel = new BroadcastChannel('egyeni_bowling');
+const firebaseConfig = {
+    apiKey: "aizasyd8o7xyctxtjlqcm8z-29xtbopbxrybjom",
+    authDomain: "teke-eredmenyek.firebaseapp.com",
+    databaseURL: "https://teke-eredmenyek-default-rtdb.firebaseio.com",
+    projectId: "teke-eredmenyek",
+    storageBucket: "teke-eredmenyek.appspot.com"
+};
+
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.database();
+
 const totalPlayers = 32;
 
 function init() {
     const container = document.getElementById('playersContainer');
+    container.innerHTML = '';
     for (let i = 0; i < totalPlayers; i++) {
         container.innerHTML += `
             <div class="card">
@@ -59,7 +76,6 @@ function init() {
             </div>
         `;
     }
-    sendData();
 }
 
 function sendData() {
@@ -69,10 +85,7 @@ function sendData() {
 
     cards.forEach((card, idx) => {
         const name = card.querySelector('.p-name').value;
-        
-        let totalTeli = 0;
-        let totalTarol = 0;
-        let totalUres = 0;
+        let totalTeli = 0, totalTarol = 0, totalUres = 0;
         const sets = [];
 
         for (let s = 0; s < 4; s++) {
@@ -83,11 +96,8 @@ function sendData() {
             totalTeli += teli;
             totalTarol += tarol;
             totalUres += ures;
-
             sets.push(teli + tarol);
         }
-
-        const total = totalTeli + totalTarol;
 
         players.push({
             id: idx + 1,
@@ -96,14 +106,18 @@ function sendData() {
             teli: totalTeli,
             tarol: totalTarol,
             ures: totalUres,
-            total: total
+            total: totalTeli + totalTarol
         });
     });
 
-    channel.postMessage({ title: title, players: players });
+    db.ref('egyeni_bowling').set({
+        title: title,
+        players: players
+    });
 }
 
 init();
 </script>
 </body>
 </html>
+ 
