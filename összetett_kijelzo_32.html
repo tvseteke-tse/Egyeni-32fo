@@ -111,27 +111,53 @@
         let egyeniData = {};
         let sprintMatches = {};
 
-        // Segédfunkció számértékek biztonságos kinyerésére (szövegből is)
+        // Segédfunkció számértékek biztonságos kinyerésére
         function getNum(val) {
             const parsed = parseInt(val, 10);
             return isNaN(parsed) ? 0 : parsed;
         }
 
-        function updateCombinedStandings() {
-            const playersMap = {};
+        // Segédfunkció nevek egységesítésére az összehasonlításhoz
+        function normalizeName(name) {
+            if (!name) return '';
+            return name.trim().toLowerCase().replace(/\s+/g, ' ');
+        }
 
-            // 1. EGYÉNI ADATOK FELDOLGOZÁSA (`egyeni_bowling/players`)
+        // Összes mérkőzés összegyűjtése (a beágyazott struktúrákból is)
+        function extractMatches(obj) {
+            let matches = [];
+            if (!obj || typeof obj !== 'object') return matches;
+
+            // Ha az objektum maga egy meccs (tartalmaz játékosnevet)
+            if (obj.p1_name || obj.p1_nev || obj.player1_name || obj.p2_name || obj.p2_nev || obj.player2_name) {
+                matches.push(obj);
+            } else {
+                // Ha beágyazott objektumok vannak (pl. fordulók)
+                Object.keys(obj).forEach(key => {
+                    if (key !== 'title' && typeof obj[key] === 'object') {
+                        matches = matches.concat(extractMatches(obj[key]));
+                    }
+                });
+            }
+            return matches;
+        }
+
+        function updateCombinedStandings() {
+            const playersMap = {}; // Kulcs: normalizált név
+
+            // 1. EGYÉNI ADATOK FELDOLGOZÁSA
             if (egyeniData) {
                 Object.keys(egyeniData).forEach(key => {
                     const p = egyeniData[key];
-                    const nev = p.nev || p.name;
-                    if (!nev) return;
+                    const rawName = p.nev || p.name || p.jatekos;
+                    if (!rawName) return;
 
-                    const egyeniFa = getNum(p.ossz || p.fa || p.osszesen || p.total);
-                    const egyesulet = p.egyesulet || p.klub || '-';
+                    const normName = normalizeName(rawName);
+                    const egyeniFa = getNum(p.ossz || p.fa || p.osszesen || p.total || p.egyeniFa);
+                    const egyesulet = p.egyesulet || p.klub || p.club || p.csapat || '-';
 
-                    playersMap[nev] = {
-                        nev: nev,
+                    playersMap[normName] = {
+                        displayName: rawName.trim(),
                         egyesulet: egyesulet,
                         egyeniFa: egyeniFa,
                         sprintMaxFa: 0
@@ -139,40 +165,59 @@
                 });
             }
 
-            // 2. SPRINT ADATOK FELDOLGOZÁSA (`torna_32` meccsei - SV nélkül)
+            // 2. SPRINT ADATOK FELDOLGOZÁSA
             if (sprintMatches) {
-                Object.keys(sprintMatches).forEach(matchKey => {
-                    if (matchKey === 'title') return;
-                    const m = sprintMatches[matchKey];
+                const allMatches = extractMatches(sprintMatches);
 
+                allMatches.forEach(m => {
                     // JÁTÉKOS 1
-                    const nev1 = m.p1_name || m.player1_name || m.p1_nev;
-                    if (nev1) {
-                        const s1 = getNum(m.p1_s1_fa || m.p1_sz1 || m.p1_s1 || m.p1_szett1);
-                        const s2 = getNum(m.p1_s2_fa || m.p1_sz2 || m.p1_s2 || m.p1_szett2);
+                    const rawName1 = m.p1_name || m.player1_name || m.p1_nev || m.p1_jatekos;
+                    if (rawName1) {
+                        const norm1 = normalizeName(rawName1);
+                        const s1 = getNum(m.p1_s1_fa || m.p1_sz1 || m.p1_s1 || m.p1_szett1 || m.p1_set1);
+                        const s2 = getNum(m.p1_s2_fa || m.p1_sz2 || m.p1_s2 || m.p1_szett2 || m.p1_set2);
                         const meccsszetFa = s1 + s2;
+                        const club1 = m.p1_club || m.p1_egyesulet || m.p1_klub || '-';
 
-                        if (!playersMap[nev1]) {
-                            playersMap[nev1] = { nev: nev1, egyesulet: m.p1_club || '-', egyeniFa: 0, sprintMaxFa: meccsszetFa };
+                        if (!playersMap[norm1]) {
+                            playersMap[norm1] = {
+                                displayName: rawName1.trim(),
+                                egyesulet: club1,
+                                egyeniFa: 0,
+                                sprintMaxFa: meccsszetFa
+                            };
                         } else {
-                            if (meccsszetFa > playersMap[nev1].sprintMaxFa) {
-                                playersMap[nev1].sprintMaxFa = meccsszetFa;
+                            if (meccsszetFa > playersMap[norm1].sprintMaxFa) {
+                                playersMap[norm1].sprintMaxFa = meccsszetFa;
+                            }
+                            if ((playersMap[norm1].egyesulet === '-' || !playersMap[norm1].egyesulet) && club1 !== '-') {
+                                playersMap[norm1].egyesulet = club1;
                             }
                         }
                     }
 
                     // JÁTÉKOS 2
-                    const nev2 = m.p2_name || m.player2_name || m.p2_nev;
-                    if (nev2) {
-                        const s1 = getNum(m.p2_s1_fa || m.p2_sz1 || m.p2_s1 || m.p2_szett1);
-                        const s2 = getNum(m.p2_s2_fa || m.p2_sz2 || m.p2_s2 || m.p2_szett2);
+                    const rawName2 = m.p2_name || m.player2_name || m.p2_nev || m.p2_jatekos;
+                    if (rawName2) {
+                        const norm2 = normalizeName(rawName2);
+                        const s1 = getNum(m.p2_s1_fa || m.p2_sz1 || m.p2_s1 || m.p2_szett1 || m.p2_set1);
+                        const s2 = getNum(m.p2_s2_fa || m.p2_sz2 || m.p2_s2 || m.p2_szett2 || m.p2_set2);
                         const meccsszetFa = s1 + s2;
+                        const club2 = m.p2_club || m.p2_egyesulet || m.p2_klub || '-';
 
-                        if (!playersMap[nev2]) {
-                            playersMap[nev2] = { nev: nev2, egyesulet: m.p2_club || '-', egyeniFa: 0, sprintMaxFa: meccsszetFa };
+                        if (!playersMap[norm2]) {
+                            playersMap[norm2] = {
+                                displayName: rawName2.trim(),
+                                egyesulet: club2,
+                                egyeniFa: 0,
+                                sprintMaxFa: meccsszetFa
+                            };
                         } else {
-                            if (meccsszetFa > playersMap[nev2].sprintMaxFa) {
-                                playersMap[nev2].sprintMaxFa = meccsszetFa;
+                            if (meccsszetFa > playersMap[norm2].sprintMaxFa) {
+                                playersMap[norm2].sprintMaxFa = meccsszetFa;
+                            }
+                            if ((playersMap[norm2].egyesulet === '-' || !playersMap[norm2].egyesulet) && club2 !== '-') {
+                                playersMap[norm2].egyesulet = club2;
                             }
                         }
                     }
@@ -184,6 +229,9 @@
                 ...p,
                 osszetettFa: p.egyeniFa + p.sprintMaxFa
             }));
+
+            // Csak azokat a játékosokat jelenítjük meg, akiknek van legalább egy felvett pontjuk/fájuk
+            combinedList = combinedList.filter(p => p.osszetettFa > 0);
 
             combinedList.sort((a, b) => b.osszetettFa - a.osszetettFa);
 
@@ -206,7 +254,7 @@
 
                 tr.innerHTML = `
                     <td class="rank">${rank}.</td>
-                    <td><strong>${player.nev}</strong></td>
+                    <td><strong>${player.displayName}</strong></td>
                     <td>${player.egyesulet}</td>
                     <td class="num-col">${player.egyeniFa}</td>
                     <td class="num-col">${player.sprintMaxFa}</td>
