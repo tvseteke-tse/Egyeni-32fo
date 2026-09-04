@@ -89,7 +89,6 @@
         </tbody>
     </table>
 
-    <!-- Firebase SDK-k -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -112,6 +111,12 @@
         let egyeniData = {};
         let sprintMatches = {};
 
+        // Segédfunkció számértékek biztonságos kinyerésére (szövegből is)
+        function getNum(val) {
+            const parsed = parseInt(val, 10);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
         function updateCombinedStandings() {
             const playersMap = {};
 
@@ -122,7 +127,7 @@
                     const nev = p.nev || p.name;
                     if (!nev) return;
 
-                    const egyeniFa = parseInt(p.fa || p.osszesen || p.total) || 0;
+                    const egyeniFa = getNum(p.ossz || p.fa || p.osszesen || p.total);
                     const egyesulet = p.egyesulet || p.klub || '-';
 
                     playersMap[nev] = {
@@ -134,17 +139,17 @@
                 });
             }
 
-            // 2. SPRINT ADATOK FELDOLGOZÁSA (`torna_32` meccsei)
+            // 2. SPRINT ADATOK FELDOLGOZÁSA (`torna_32` meccsei - SV nélkül)
             if (sprintMatches) {
                 Object.keys(sprintMatches).forEach(matchKey => {
                     if (matchKey === 'title') return;
                     const m = sprintMatches[matchKey];
 
-                    // Játékos 1
-                    if (m.p1_name) {
-                        const nev1 = m.p1_name;
-                        const s1 = parseInt(m.p1_s1_fa) || 0;
-                        const s2 = parseInt(m.p1_s2_fa) || 0;
+                    // JÁTÉKOS 1
+                    const nev1 = m.p1_name || m.player1_name || m.p1_nev;
+                    if (nev1) {
+                        const s1 = getNum(m.p1_s1_fa || m.p1_sz1 || m.p1_s1 || m.p1_szett1);
+                        const s2 = getNum(m.p1_s2_fa || m.p1_sz2 || m.p1_s2 || m.p1_szett2);
                         const meccsszetFa = s1 + s2;
 
                         if (!playersMap[nev1]) {
@@ -156,11 +161,11 @@
                         }
                     }
 
-                    // Játékos 2
-                    if (m.p2_name) {
-                        const nev2 = m.p2_name;
-                        const s1 = parseInt(m.p2_s1_fa) || 0;
-                        const s2 = parseInt(m.p2_s2_fa) || 0;
+                    // JÁTÉKOS 2
+                    const nev2 = m.p2_name || m.player2_name || m.p2_nev;
+                    if (nev2) {
+                        const s1 = getNum(m.p2_s1_fa || m.p2_sz1 || m.p2_s1 || m.p2_szett1);
+                        const s2 = getNum(m.p2_s2_fa || m.p2_sz2 || m.p2_s2 || m.p2_szett2);
                         const meccsszetFa = s1 + s2;
 
                         if (!playersMap[nev2]) {
@@ -182,7 +187,7 @@
 
             combinedList.sort((a, b) => b.osszetettFa - a.osszetettFa);
 
-            // 4. TÁBLÁZAT FRISSÍTÉSE
+            // 4. KIJELZŐ TÁBLÁZAT FRISSÍTÉSE
             standingsBody.innerHTML = '';
             if (combinedList.length === 0) {
                 standingsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nincs megjeleníthető adat</td></tr>';
@@ -211,12 +216,13 @@
             });
         }
 
-        // Adatbázis figyelők
+        // Egyéni adatok valós idejű figyelése
         db.ref('egyeni_bowling/players').on('value', (snapshot) => {
             egyeniData = snapshot.val() || {};
             updateCombinedStandings();
         });
 
+        // Sprint meccsek valós idejű figyelése
         db.ref('torna_32').on('value', (snapshot) => {
             sprintMatches = snapshot.val() || {};
             updateCombinedStandings();
