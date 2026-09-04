@@ -230,10 +230,16 @@
                 osszetettFa: p.egyeniFa + p.sprintMaxFa
             }));
 
-            // Csak azokat a játékosokat jelenítjük meg, akiknek van legalább egy felvett pontjuk/fájuk
+            // Csak a pontot szerző játékosok megjelenítése
             combinedList = combinedList.filter(p => p.osszetettFa > 0);
 
-            combinedList.sort((a, b) => b.osszetettFa - a.osszetettFa);
+            // Rendezés: 1. Összetett fa (csökkenő), 2. Egyéni fa (csökkenő)
+            combinedList.sort((a, b) => {
+                if (b.osszetettFa !== a.osszetettFa) {
+                    return b.osszetettFa - a.osszetettFa;
+                }
+                return b.egyeniFa - a.egyeniFa;
+            });
 
             // 4. KIJELZŐ TÁBLÁZAT FRISSÍTÉSE
             standingsBody.innerHTML = '';
