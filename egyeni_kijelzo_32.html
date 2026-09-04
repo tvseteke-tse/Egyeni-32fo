@@ -13,7 +13,7 @@
         user-select: none;
     }
     .board-container {
-        max-width: 1400px;
+        max-width: 1550px;
         margin: 0 auto;
         background: #001c47;
         border: 3px solid #0044aa;
@@ -35,8 +35,9 @@
     th { color: #ffff00; border-bottom: 2px solid #0044aa; padding: 6px 2px; font-size: 0.85rem; }
     td { padding: 6px 2px; text-align: center; border-bottom: 1px solid #002b66; font-size: 1rem; font-weight: bold; }
     
-    .rank-col { width: 35px; color: #ffffff; font-weight: bold; text-align: center; }
-    .name-col { text-align: left; font-family: sans-serif; color: #ffff00; width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rank-col { width: 30px; color: #ffffff; font-weight: bold; text-align: center; }
+    .name-col { text-align: left; font-family: sans-serif; color: #ffff00; width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .club-col { text-align: left; font-family: sans-serif; color: #58a6ff; font-weight: normal; font-size: 0.85rem; width: 90px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .stat-col { color: #8b949e; font-size: 0.95rem; }
     
     .color-green { color: #00ff66 !important; text-shadow: 0 0 5px rgba(0, 255, 102, 0.4); }
@@ -62,6 +63,7 @@
                 <tr>
                     <th class="rank-col">#</th>
                     <th class="name-col">Név</th>
+                    <th class="club-col">Egyesület</th>
                     <th>S1</th><th>S2</th><th>S3</th><th>S4</th>
                     <th>Teli</th>
                     <th>Tarol</th>
@@ -77,6 +79,7 @@
                 <tr>
                     <th class="rank-col">#</th>
                     <th class="name-col">Név</th>
+                    <th class="club-col">Egyesület</th>
                     <th>S1</th><th>S2</th><th>S3</th><th>S4</th>
                     <th>Teli</th>
                     <th>Tarol</th>
@@ -163,9 +166,12 @@ function renderBoard(players) {
             return `<td class="${getSetColorClass(s)}">${s}</td>`;
         }).join('');
 
+        const clubText = player.club || '-';
+
         tr.innerHTML = `
             <td class="rank-col">${currentRank}.</td>
             <td class="name-col">${player.name}</td>
+            <td class="club-col" title="${clubText}">${clubText}</td>
             ${setsHTML}
             <td class="stat-col">${player.teli}</td>
             <td class="stat-col">${player.tarol}</td>
