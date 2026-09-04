@@ -54,9 +54,11 @@ const totalPlayers = 32;
 function init() {
     const container = document.getElementById('playersContainer');
     container.innerHTML = '';
+    
+    // 1. A kártyák (HTML váz) generálása
     for (let i = 0; i < totalPlayers; i++) {
         container.innerHTML += `
-            <div class="card">
+            <div class="card" data-idx="${i}">
                 <div class="card-header">
                     <span>#${i + 1} Játékos</span>
                 </div>
@@ -76,6 +78,49 @@ function init() {
             </div>
         `;
     }
+
+    // 2. Adatok betöltése a Firebase adatbázisból oldalfrissítéskor és élő frissüléskor
+    db.ref('egyeni_bowling').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+
+        // Cím frissítése (ha épp nem azon áll a kurzor)
+        const titleInput = document.getElementById('tournamentTitle');
+        if (document.activeElement !== titleInput && data.title) {
+            titleInput.value = data.title;
+        }
+
+        // Játékosok adatainak betöltése a mezőkbe
+        if (data.players && Array.isArray(data.players)) {
+            const cards = document.querySelectorAll('.card');
+            
+            data.players.forEach((player, idx) => {
+                if (cards[idx]) {
+                    const card = cards[idx];
+                    const nameInput = card.querySelector('.p-name');
+                    
+                    // Csak akkor írjuk felül a mezőt, ha a felhasználó épp NEM abba gépel!
+                    if (document.activeElement !== nameInput) {
+                        // Ha a mentett név alapértelmezett (pl. "Játékos 1"), üresen hagyjuk a placeholder miatt
+                        nameInput.value = (player.name && !player.name.startsWith('Játékos ')) ? player.name : '';
+                    }
+
+                    // Szettek feltöltése (részletes adatok visszaállítása, ha el lettek mentve)
+                    for (let s = 0; s < 4; s++) {
+                        const teliInp = card.querySelector(`.p-teli${s}`);
+                        const tarolInp = card.querySelector(`.p-tarol${s}`);
+                        const uresInp = card.querySelector(`.p-ures${s}`);
+
+                        if (player.rawSets && player.rawSets[s]) {
+                            if (document.activeElement !== teliInp) teliInp.value = player.rawSets[s].teli || '';
+                            if (document.activeElement !== tarolInp) tarolInp.value = player.rawSets[s].tarol || '';
+                            if (document.activeElement !== uresInp) uresInp.value = player.rawSets[s].ures || '';
+                        }
+                    }
+                }
+            });
+        }
+    });
 }
 
 function sendData() {
@@ -87,22 +132,35 @@ function sendData() {
         const name = card.querySelector('.p-name').value;
         let totalTeli = 0, totalTarol = 0, totalUres = 0;
         const sets = [];
+        const rawSets = []; // Eltároljuk a nyers teli/tarol/üres értékeket is a későbbi visszatöltéshez!
 
         for (let s = 0; s < 4; s++) {
-            const teli = parseInt(card.querySelector(`.p-teli${s}`).value) || 0;
-            const tarol = parseInt(card.querySelector(`.p-tarol${s}`).value) || 0;
-            const ures = parseInt(card.querySelector(`.p-ures${s}`).value) || 0;
+            const teliVal = card.querySelector(`.p-teli${s}`).value;
+            const tarolVal = card.querySelector(`.p-tarol${s}`).value;
+            const uresVal = card.querySelector(`.p-ures${s}`).value;
+
+            const teli = parseInt(teliVal) || 0;
+            const tarol = parseInt(tarolVal) || 0;
+            const ures = parseInt(uresVal) || 0;
 
             totalTeli += teli;
             totalTarol += tarol;
             totalUres += ures;
             sets.push(teli + tarol);
+
+            // Nyers adatok elmentése objektumként
+            rawSets.push({
+                teli: teliVal !== '' ? teli : '',
+                tarol: tarolVal !== '' ? tarol : '',
+                ures: uresVal !== '' ? ures : ''
+            });
         }
 
         players.push({
             id: idx + 1,
             name: name || `Játékos ${idx + 1}`,
             sets: sets,
+            rawSets: rawSets, // <-- Ez tárolja a szettenkénti Teli / Tarol / Üres külön mezőit
             teli: totalTeli,
             tarol: totalTarol,
             ures: totalUres,
@@ -120,4 +178,3 @@ init();
 </script>
 </body>
 </html>
- 
