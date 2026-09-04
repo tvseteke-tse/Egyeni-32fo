@@ -16,7 +16,12 @@
     .card { background: #1e1e1e; padding: 10px; border-radius: 6px; border: 1px solid #333; }
     .card-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; color: #8b949e; }
     .row { display: flex; gap: 5px; align-items: center; margin-bottom: 6px; }
-    input[type="text"].p-name { flex: 1; background: #2a2a2a; border: 1px solid #444; color: white; padding: 6px; border-radius: 4px; font-weight: bold; }
+    input[type="text"].p-name, input[type="text"].p-club { 
+        flex: 1; background: #2a2a2a; border: 1px solid #444; color: white; padding: 6px; border-radius: 4px; font-weight: bold; 
+    }
+    input[type="text"].p-club {
+        color: #58a6ff; font-weight: normal; font-size: 0.9rem;
+    }
     .stats-inputs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; background: #252525; padding: 6px; border-radius: 4px; }
     .set-box { display: flex; flex-direction: column; gap: 3px; background: #1a1a1a; padding: 4px; border-radius: 4px; text-align: center; }
     .set-box label { font-size: 0.75rem; color: #3fb950; font-weight: bold; }
@@ -55,7 +60,7 @@ function init() {
     const container = document.getElementById('playersContainer');
     container.innerHTML = '';
     
-    // 1. A kártyák (HTML váz) generálása
+    // 1. A kártyák HTML vázának létrehozása
     for (let i = 0; i < totalPlayers; i++) {
         container.innerHTML += `
             <div class="card" data-idx="${i}">
@@ -64,6 +69,7 @@ function init() {
                 </div>
                 <div class="row">
                     <input type="text" class="p-name" placeholder="Játékos neve" oninput="sendData()">
+                    <input type="text" class="p-club" placeholder="Egyesület / Klub" oninput="sendData()">
                 </div>
                 <div class="stats-inputs">
                     ${[0,1,2,3].map(s => `
@@ -79,18 +85,18 @@ function init() {
         `;
     }
 
-    // 2. Adatok betöltése a Firebase adatbázisból oldalfrissítéskor és élő frissüléskor
+    // 2. Adatok lekérése a Firebase-ből és betöltése a mezőkbe
     db.ref('egyeni_bowling').on('value', (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
 
-        // Cím frissítése (ha épp nem azon áll a kurzor)
+        // Cím frissítése
         const titleInput = document.getElementById('tournamentTitle');
         if (document.activeElement !== titleInput && data.title) {
             titleInput.value = data.title;
         }
 
-        // Játékosok adatainak betöltése a mezőkbe
+        // Játékosok és egyesületek betöltése
         if (data.players && Array.isArray(data.players)) {
             const cards = document.querySelectorAll('.card');
             
@@ -98,14 +104,19 @@ function init() {
                 if (cards[idx]) {
                     const card = cards[idx];
                     const nameInput = card.querySelector('.p-name');
+                    const clubInput = card.querySelector('.p-club');
                     
-                    // Csak akkor írjuk felül a mezőt, ha a felhasználó épp NEM abba gépel!
+                    // Név frissítése (ha nem abba gépel éppen)
                     if (document.activeElement !== nameInput) {
-                        // Ha a mentett név alapértelmezett (pl. "Játékos 1"), üresen hagyjuk a placeholder miatt
                         nameInput.value = (player.name && !player.name.startsWith('Játékos ')) ? player.name : '';
                     }
 
-                    // Szettek feltöltése (részletes adatok visszaállítása, ha el lettek mentve)
+                    // Egyesület frissítése (ha nem abba gépel éppen)
+                    if (document.activeElement !== clubInput) {
+                        clubInput.value = player.club || '';
+                    }
+
+                    // Szettek frissítése
                     for (let s = 0; s < 4; s++) {
                         const teliInp = card.querySelector(`.p-teli${s}`);
                         const tarolInp = card.querySelector(`.p-tarol${s}`);
@@ -130,9 +141,11 @@ function sendData() {
 
     cards.forEach((card, idx) => {
         const name = card.querySelector('.p-name').value;
+        const club = card.querySelector('.p-club').value;
+        
         let totalTeli = 0, totalTarol = 0, totalUres = 0;
         const sets = [];
-        const rawSets = []; // Eltároljuk a nyers teli/tarol/üres értékeket is a későbbi visszatöltéshez!
+        const rawSets = [];
 
         for (let s = 0; s < 4; s++) {
             const teliVal = card.querySelector(`.p-teli${s}`).value;
@@ -148,7 +161,6 @@ function sendData() {
             totalUres += ures;
             sets.push(teli + tarol);
 
-            // Nyers adatok elmentése objektumként
             rawSets.push({
                 teli: teliVal !== '' ? teli : '',
                 tarol: tarolVal !== '' ? tarol : '',
@@ -159,8 +171,9 @@ function sendData() {
         players.push({
             id: idx + 1,
             name: name || `Játékos ${idx + 1}`,
+            club: club || '', // Egyesület mentése
             sets: sets,
-            rawSets: rawSets, // <-- Ez tárolja a szettenkénti Teli / Tarol / Üres külön mezőit
+            rawSets: rawSets,
             teli: totalTeli,
             tarol: totalTarol,
             ures: totalUres,
