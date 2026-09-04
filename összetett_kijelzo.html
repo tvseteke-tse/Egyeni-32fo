@@ -85,61 +85,121 @@
             </tr>
         </thead>
         <tbody id="standings-body">
-            </tbody>
+            <tr><td colspan="6" style="text-align:center;">Adatok betöltése...</td></tr>
+        </tbody>
     </table>
 
+    <!-- Firebase SDK-k -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <script>
-        // Firebase Konfiguráció (Ide másold be a meglévő Firebase configodat!)
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
+        // 1. EGYÉNI VERSENY FIREBASE CONFIG
+        const egyeniConfig = {
+            apiKey: "EGYENI_API_KEY",
+            authDomain: "EGYENI_PROJECT.firebaseapp.com",
+            databaseURL: "https://EGYENI_PROJECT-default-rtdb.firebaseio.com",
+            projectId: "EGYENI_PROJECT",
+            storageBucket: "EGYENI_PROJECT.appspot.com",
+            messagingSenderId: "SENDER_ID",
+            appId: "APP_ID"
         };
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        // 2. SPRINT VERSENY FIREBASE CONFIG
+        const sprintConfig = {
+            apiKey: "SPRINT_API_KEY",
+            authDomain: "SPRINT_PROJECT.firebaseapp.com",
+            databaseURL: "https://SPRINT_PROJECT-default-rtdb.firebaseio.com",
+            projectId: "SPRINT_PROJECT",
+            storageBucket: "SPRINT_PROJECT.appspot.com",
+            messagingSenderId: "SENDER_ID",
+            appId: "APP_ID"
+        };
+
+        // Két Firebase alkalmazás inicializálása külön nevekkel
+        const egyeniApp = firebase.initializeApp(egyeniConfig, "egyeniApp");
+        const sprintApp = firebase.initializeApp(sprintConfig, "sprintApp");
+
+        const egyeniDb = firebase.database(egyeniApp);
+        const sprintDb = firebase.database(sprintApp);
 
         const standingsBody = document.getElementById('standings-body');
 
-        // Valós idejű adatfigyelés az 'osszetett_eredmenyek' csomóponton
-        db.ref('osszetett_eredmenyek').on('value', (snapshot) => {
-            const data = snapshot.val();
-            standingsBody.innerHTML = '';
+        let egyeniData = {};
+        let sprintData = {};
 
-            if (!data) {
+        // Adatok feldolgozása és összevonása
+        function updateCombinedStandings() {
+            const playersMap = {}; // Játékosok összegzett adatai név szerint összefésülve
+
+            // 1. Egyéni adatok beolvasása
+            if (egyeniData) {
+                Object.keys(egyeniData).forEach(key => {
+                    const p = egyeniData[key];
+                    const nev = p.nev || p.name;
+                    if (!nev) return;
+
+                    // Egyéni fa megkeresése (módosítsd a kulcsnevet, ha a DB-ben más pl: ossz_fa, teljes_fa)
+                    const egyeniFa = parseInt(p.fa || p.egyeni_fa || p.osszesen) || 0;
+                    const egyesulet = p.egyesulet || p.klub || '-';
+
+                    playersMap[nev] = {
+                        nev: nev,
+                        egyesulet: egyesulet,
+                        egyeniFa: egyeniFa,
+                        sprintMaxFa: 0
+                    };
+                });
+            }
+
+            // 2. Sprint adatok beolvasása és a LEGJOBB (max) fa kiválasztása (SV nélkül)
+            if (sprintData) {
+                Object.keys(sprintData).forEach(key => {
+                    const matchOrPlayer = sprintData[key];
+
+                    // Támogatja, ha a sprint DB meccsekre vagy ha játékosokra van strukturálva:
+                    const nev = matchOrPlayer.nev || matchOrPlayer.jatek_nev;
+                    
+                    // A sprint normál fái (SV / Sudden Victory nélkül!)
+                    const sprintFa = parseInt(matchOrPlayer.sprint_fa || matchOrPlayer.fa_sv_nelkul || matchOrPlayer.szett_fak) || 0;
+
+                    if (nev) {
+                        if (!playersMap[nev]) {
+                            playersMap[nev] = {
+                                nev: nev,
+                                egyesulet: matchOrPlayer.egyesulet || '-',
+                                egyeniFa: 0,
+                                sprintMaxFa: sprintFa
+                            };
+                        } else {
+                            // Csak akkor frissítjük, ha ez az eddigi legjobb sprint eredménye
+                            if (sprintFa > playersMap[nev].sprintMaxFa) {
+                                playersMap[nev].sprintMaxFa = sprintFa;
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Tömbbe rendezés
+            let combinedList = Object.values(playersMap).map(p => {
+                return {
+                    ...p,
+                    osszetettFa: p.egyeniFa + p.sprintMaxFa
+                };
+            });
+
+            // Rendezés Összetett Fa alapján csökkenő sorrendben
+            combinedList.sort((a, b) => b.osszetettFa - a.osszetettFa);
+
+            // Táblázat kirajzolása
+            standingsBody.innerHTML = '';
+            if (combinedList.length === 0) {
                 standingsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nincs megjeleníthető adat</td></tr>';
                 return;
             }
 
-            // Objektum tömbbé alakítása a rendezéshez
-            let list = [];
-            Object.keys(data).forEach(key => {
-                const player = data[key];
-                const egyeni = parseInt(player.egyeni_fa) || 0;
-                const sprint = parseInt(player.sprint_max_fa) || 0;
-                const osszetett = egyeni + sprint;
-
-                list.push({
-                    nev: player.nev || 'Névtelen',
-                    egyesulet: player.egyesulet || '-',
-                    egyeni: egyeni,
-                    sprint: sprint,
-                    osszetett: osszetett
-                });
-            });
-
-            // Rendezés összetett fa alapján csökkenő sorrendben
-            list.sort((a, b) => b.osszetett - a.osszetett);
-
-            // Táblázat feltöltése
-            list.forEach((player, index) => {
+            combinedList.forEach((player, index) => {
                 const rank = index + 1;
                 let rowClass = '';
                 if (rank === 1) rowClass = 'top-1';
@@ -153,12 +213,24 @@
                     <td class="rank">${rank}.</td>
                     <td><strong>${player.nev}</strong></td>
                     <td>${player.egyesulet}</td>
-                    <td class="num-col">${player.egyeni}</td>
-                    <td class="num-col">${player.sprint}</td>
-                    <td class="num-col total-score">${player.osszetett}</td>
+                    <td class="num-col">${player.egyeniFa}</td>
+                    <td class="num-col">${player.sprintMaxFa}</td>
+                    <td class="num-col total-score">${player.osszetettFa}</td>
                 `;
                 standingsBody.appendChild(tr);
             });
+        }
+
+        // Egyéni DB figyelése
+        egyeniDb.ref('eredmenyek').on('value', (snapshot) => {
+            egyeniData = snapshot.val() || {};
+            updateCombinedStandings();
+        });
+
+        // Sprint DB figyelése
+        sprintDb.ref('sprint_eredmenyek').on('value', (snapshot) => {
+            sprintData = snapshot.val() || {};
+            updateCombinedStandings();
         });
     </script>
 </body>
