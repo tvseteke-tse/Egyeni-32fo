@@ -64,11 +64,11 @@
                     <th class="rank-col">#</th>
                     <th class="name-col">Név</th>
                     <th class="club-col">Egyesület</th>
+                    <th class="total-col">Össz.</th>
                     <th>S1</th><th>S2</th><th>S3</th><th>S4</th>
                     <th>Teli</th>
                     <th>Tarol</th>
                     <th>Üres</th>
-                    <th class="total-col">Össz.</th>
                 </tr>
             </thead>
             <tbody id="boardBody1"></tbody>
@@ -80,11 +80,11 @@
                     <th class="rank-col">#</th>
                     <th class="name-col">Név</th>
                     <th class="club-col">Egyesület</th>
+                    <th class="total-col">Össz.</th>
                     <th>S1</th><th>S2</th><th>S3</th><th>S4</th>
                     <th>Teli</th>
                     <th>Tarol</th>
                     <th>Üres</th>
-                    <th class="total-col">Össz.</th>
                 </tr>
             </thead>
             <tbody id="boardBody2"></tbody>
@@ -172,11 +172,11 @@ function renderBoard(players) {
             <td class="rank-col">${currentRank}.</td>
             <td class="name-col">${player.name}</td>
             <td class="club-col" title="${clubText}">${clubText}</td>
+            <td class="total-col ${getTotalColorClass(player.total)}">${player.total}</td>
             ${setsHTML}
             <td class="stat-col">${player.teli}</td>
             <td class="stat-col">${player.tarol}</td>
             <td class="stat-col ${getUresColorClass(player.ures)}">${player.ures}</td>
-            <td class="total-col ${getTotalColorClass(player.total)}">${player.total}</td>
         `;
 
         if (index < 16) body1.appendChild(tr);
