@@ -95,13 +95,13 @@
 
     <script>
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
+            apiKey: "AIzaSyD8o7xyCtxTJlQcM8z-29XTBOpBXrYbjOM",
             authDomain: "teke-eredmenyek.firebaseapp.com",
             databaseURL: "https://teke-eredmenyek-default-rtdb.firebaseio.com",
             projectId: "teke-eredmenyek",
             storageBucket: "teke-eredmenyek.appspot.com",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            messagingSenderId: "550402585638",
+            appId: "1:550402585638:web:f2457753e94d4610ede2e7"
         };
 
         firebase.initializeApp(firebaseConfig);
@@ -137,13 +137,12 @@
             // 2. SPRINT ADATOK FELDOLGOZÁSA (`torna_32` meccsei)
             if (sprintMatches) {
                 Object.keys(sprintMatches).forEach(matchKey => {
-                    if (matchKey === 'title') return; // Cím mező átugrása
+                    if (matchKey === 'title') return;
                     const m = sprintMatches[matchKey];
 
-                    // Játékos 1 adatai a meccsből
+                    // Játékos 1
                     if (m.p1_name) {
                         const nev1 = m.p1_name;
-                        // Csak a rendes szettek fái (SV nélkül!)
                         const s1 = parseInt(m.p1_s1_fa) || 0;
                         const s2 = parseInt(m.p1_s2_fa) || 0;
                         const meccsszetFa = s1 + s2;
@@ -157,7 +156,7 @@
                         }
                     }
 
-                    // Játékos 2 adatai a meccsből
+                    // Játékos 2
                     if (m.p2_name) {
                         const nev2 = m.p2_name;
                         const s1 = parseInt(m.p2_s1_fa) || 0;
@@ -175,7 +174,7 @@
                 });
             }
 
-            // 3. ÖSSZETETT TÖMB ÉS RENDEZÉS
+            // 3. ÖSSZETETT ADATOK RENDEZÉSE
             let combinedList = Object.values(playersMap).map(p => ({
                 ...p,
                 osszetettFa: p.egyeniFa + p.sprintMaxFa
@@ -183,7 +182,7 @@
 
             combinedList.sort((a, b) => b.osszetettFa - a.osszetettFa);
 
-            // 4. KIJELZŐ FRISSÍTÉSE
+            // 4. TÁBLÁZAT FRISSÍTÉSE
             standingsBody.innerHTML = '';
             if (combinedList.length === 0) {
                 standingsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nincs megjeleníthető adat</td></tr>';
@@ -212,13 +211,12 @@
             });
         }
 
-        // Egyéni eredmények figyelése
+        // Adatbázis figyelők
         db.ref('egyeni_bowling/players').on('value', (snapshot) => {
             egyeniData = snapshot.val() || {};
             updateCombinedStandings();
         });
 
-        // Sprint meccsek figyelése (torna_32)
         db.ref('torna_32').on('value', (snapshot) => {
             sprintMatches = snapshot.val() || {};
             updateCombinedStandings();
