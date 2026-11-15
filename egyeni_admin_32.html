@@ -87,7 +87,7 @@ function createCards() {
     const container = document.getElementById('playersContainer');
     container.innerHTML = '';
     
-    // 1. A kártyák HTML vázának azonnali létrehozása
+    // A kártyák HTML vázának azonnali létrehozása
     for (let i = 0; i < totalPlayers; i++) {
         container.innerHTML += `
             <div class="card" data-idx="${i}">
@@ -116,18 +116,15 @@ function createCards() {
 function initFirebaseSync() {
     if (!db) return;
 
-    // Adatok lekérése a Firebase-ből és betöltése a mezőkbe
     db.ref('egyeni_bowling').on('value', (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
 
-        // Cím frissítése
         const titleInput = document.getElementById('tournamentTitle');
         if (document.activeElement !== titleInput && data.title) {
             titleInput.value = data.title;
         }
 
-        // Játékosok és egyesületek betöltése
         if (data.players && Array.isArray(data.players)) {
             const cards = document.querySelectorAll('.card');
             
@@ -218,8 +215,8 @@ function sendData() {
 }
 
 function resetAll() {
-    if (confirm("Biztosan törölni szeretnéd az összes bevitt adatot? Ez a művelet nem vonható vissza!")) {
-        document.getElementById('tournamentTitle').value = 'Egyéni Bajnokság';
+    if (confirm("Biztosan törölni szeretnéd az összes bevitt adatot? (A verseny neve megmarad)")) {
+        // A verseny nevének törlésére vonatkozó sor eltávolítva, így az változatlan marad!
         
         const cards = document.querySelectorAll('.card');
         cards.forEach(card => {
