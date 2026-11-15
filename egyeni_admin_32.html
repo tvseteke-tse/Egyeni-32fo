@@ -6,11 +6,32 @@
 <title>Egyéni Teke - Adminisztráció (Online)</title>
 <style>
     body { font-family: sans-serif; background: #121212; color: white; padding: 15px; margin: 0; }
-    .header-panel { margin-bottom: 20px; text-align: center; }
+    .header-panel { 
+        margin-bottom: 20px; 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        gap: 12px; 
+        flex-wrap: wrap;
+    }
     .header-panel input {
-        font-size: 1.4rem; padding: 8px 12px; width: 80%; max-width: 500px;
+        font-size: 1.4rem; padding: 8px 12px; width: 70%; max-width: 500px;
         background: #2a2a2a; border: 2px solid #3fb950; color: #ffff00;
         font-weight: bold; border-radius: 6px; text-align: center;
+    }
+    .reset-btn {
+        font-size: 1.1rem;
+        padding: 10px 18px;
+        background: #da3633;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .reset-btn:hover {
+        background: #b62324;
     }
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 12px; }
     .card { background: #1e1e1e; padding: 10px; border-radius: 6px; border: 1px solid #333; }
@@ -36,6 +57,7 @@
 
 <div class="header-panel">
     <input type="text" id="tournamentTitle" value="Egyéni Bajnokság" placeholder="Bajnokság / Verseny Neve" oninput="sendData()">
+    <button type="button" class="reset-btn" onclick="resetAll()">Nullázás</button>
 </div>
 
 <div class="grid" id="playersContainer"></div>
@@ -187,7 +209,5 @@ function sendData() {
     });
 }
 
-init();
-</script>
-</body>
-</html>
+function resetAll() {
+    if (confirm("Biztosan törölni szeretnéd az összes bevitt adatot? Ez
