@@ -71,18 +71,23 @@ const firebaseConfig = {
     storageBucket: "teke-eredmenyek.appspot.com"
 };
 
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
+let db = null;
+try {
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    db = firebase.database();
+} catch (e) {
+    console.warn("Firebase inicializálási hiba:", e);
 }
-const db = firebase.database();
 
 const totalPlayers = 32;
 
-function init() {
+function createCards() {
     const container = document.getElementById('playersContainer');
     container.innerHTML = '';
     
-    // 1. A kártyák HTML vázának létrehozása
+    // 1. A kártyák HTML vázának azonnali létrehozása
     for (let i = 0; i < totalPlayers; i++) {
         container.innerHTML += `
             <div class="card" data-idx="${i}">
@@ -106,8 +111,12 @@ function init() {
             </div>
         `;
     }
+}
 
-    // 2. Adatok lekérése a Firebase-ből és betöltése a mezőkbe
+function initFirebaseSync() {
+    if (!db) return;
+
+    // Adatok lekérése a Firebase-ből és betöltése a mezőkbe
     db.ref('egyeni_bowling').on('value', (snapshot) => {
         const data = snapshot.val();
         if (!data) return;
@@ -128,26 +137,23 @@ function init() {
                     const nameInput = card.querySelector('.p-name');
                     const clubInput = card.querySelector('.p-club');
                     
-                    // Név frissítése (ha nem abba gépel éppen)
                     if (document.activeElement !== nameInput) {
                         nameInput.value = (player.name && !player.name.startsWith('Játékos ')) ? player.name : '';
                     }
 
-                    // Egyesület frissítése (ha nem abba gépel éppen)
                     if (document.activeElement !== clubInput) {
                         clubInput.value = player.club || '';
                     }
 
-                    // Szettek frissítése
                     for (let s = 0; s < 4; s++) {
                         const teliInp = card.querySelector(`.p-teli${s}`);
                         const tarolInp = card.querySelector(`.p-tarol${s}`);
                         const uresInp = card.querySelector(`.p-ures${s}`);
 
                         if (player.rawSets && player.rawSets[s]) {
-                            if (document.activeElement !== teliInp) teliInp.value = player.rawSets[s].teli || '';
-                            if (document.activeElement !== tarolInp) tarolInp.value = player.rawSets[s].tarol || '';
-                            if (document.activeElement !== uresInp) uresInp.value = player.rawSets[s].ures || '';
+                            if (document.activeElement !== teliInp) teliInp.value = player.rawSets[s].teli !== undefined ? player.rawSets[s].teli : '';
+                            if (document.activeElement !== tarolInp) tarolInp.value = player.rawSets[s].tarol !== undefined ? player.rawSets[s].tarol : '';
+                            if (document.activeElement !== uresInp) uresInp.value = player.rawSets[s].ures !== undefined ? player.rawSets[s].ures : '';
                         }
                     }
                 }
@@ -157,6 +163,8 @@ function init() {
 }
 
 function sendData() {
+    if (!db) return;
+
     const title = document.getElementById('tournamentTitle').value || 'Egyéni Bajnokság';
     const players = [];
     const cards = document.querySelectorAll('.card');
@@ -193,7 +201,7 @@ function sendData() {
         players.push({
             id: idx + 1,
             name: name || `Játékos ${idx + 1}`,
-            club: club || '', // Egyesület mentése
+            club: club || '',
             sets: sets,
             rawSets: rawSets,
             teli: totalTeli,
@@ -206,8 +214,32 @@ function sendData() {
     db.ref('egyeni_bowling').set({
         title: title,
         players: players
-    });
+    }).catch(err => console.error("Mentési hiba:", err));
 }
 
 function resetAll() {
-    if (confirm("Biztosan törölni szeretnéd az összes bevitt adatot? Ez
+    if (confirm("Biztosan törölni szeretnéd az összes bevitt adatot? Ez a művelet nem vonható vissza!")) {
+        document.getElementById('tournamentTitle').value = 'Egyéni Bajnokság';
+        
+        const cards = document.querySelectorAll('.card');
+        cards.forEach(card => {
+            card.querySelector('.p-name').value = '';
+            card.querySelector('.p-club').value = '';
+            
+            for (let s = 0; s < 4; s++) {
+                card.querySelector(`.p-teli${s}`).value = '';
+                card.querySelector(`.p-tarol${s}`).value = '';
+                card.querySelector(`.p-ures${s}`).value = '';
+            }
+        });
+
+        sendData();
+    }
+}
+
+// Futtatás indításkor
+createCards();
+initFirebaseSync();
+</script>
+</body>
+</html>
