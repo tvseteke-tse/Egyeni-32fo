@@ -5,8 +5,10 @@
 <title>Egyéni Teke - Színes Ranglista (Online - 1920x1080)</title>
 <style>
     :root {
-        --row-height: 60px;
+        --row-height: 58px;
         --cell-font: 1.25rem;
+        --name-font: 1.25rem;
+        --club-font: 1.05rem;
         --total-font: 1.4rem;
         --header-font: 1.1rem;
         --cell-pad-y: 8px;
@@ -72,7 +74,7 @@
         height: 100%;
         border-collapse: collapse;
         font-family: 'Courier New', Courier, monospace;
-        table-layout: fixed;
+        table-layout: auto;
     }
 
     thead {
@@ -87,6 +89,10 @@
         background-color: #001536;
         white-space: nowrap;
         text-align: center;
+    }
+
+    th.name-col, th.club-col {
+        text-align: left;
     }
 
     tbody tr {
@@ -105,17 +111,57 @@
         border-bottom: 1px solid #003380;
         font-size: var(--cell-font);
         font-weight: bold;
-        line-height: 1.1;
+        line-height: 1.15;
         white-space: nowrap;
     }
 
-    /* Fix oszlopszélességek, hogy ne érjenek össze a fejlécek */
-    .rank-col { width: 52px; color: #ffffff; font-weight: bold; text-align: center; }
-    .name-col { width: 175px; text-align: left; font-family: sans-serif; color: #ffff00; overflow: hidden; text-overflow: ellipsis; }
-    .club-col { width: 140px; text-align: left; font-family: sans-serif; color: #58a6ff; font-weight: normal; font-size: calc(var(--cell-font) * 0.88); overflow: hidden; text-overflow: ellipsis; }
-    .total-col { width: 82px; font-weight: bold; font-size: var(--total-font); }
-    .set-col { width: 52px; }
-    .stat-col { width: 64px; color: #8b949e; font-size: calc(var(--cell-font) * 0.95); }
+    .rank-col {
+        width: 48px;
+        color: #ffffff;
+        font-weight: bold;
+        text-align: center;
+    }
+
+    /* Teljes név megjelenítés levágás nélkül */
+    .name-col {
+        text-align: left;
+        font-family: sans-serif;
+        color: #ffff00;
+        font-size: var(--name-font);
+        white-space: nowrap;
+        overflow: visible;
+        text-overflow: clip;
+        padding-right: 12px;
+    }
+
+    .club-col {
+        text-align: left;
+        font-family: sans-serif;
+        color: #58a6ff;
+        font-weight: normal;
+        font-size: var(--club-font);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 210px;
+        padding-right: 10px;
+    }
+
+    .total-col {
+        width: 78px;
+        font-weight: bold;
+        font-size: var(--total-font);
+    }
+
+    .set-col {
+        width: 50px;
+    }
+
+    .stat-col {
+        width: 62px;
+        color: #8b949e;
+        font-size: var(--cell-font);
+    }
 
     .color-green { color: #00ff66 !important; text-shadow: 0 0 6px rgba(0, 255, 102, 0.5); }
     .color-yellow { color: #ffff00 !important; text-shadow: 0 0 6px rgba(255, 255, 0, 0.5); }
@@ -262,85 +308,27 @@ function getUresColorClass(val) {
     return 'color-red';
 }
 
-function updateDynamicSizing(rowsPerCol) {
+function fitBoardToContainer(players, rowsPerCol) {
     const grid = document.getElementById('tableGrid');
     const safeRows = Math.max(rowsPerCol, 1);
     const headerHeight = 46;
     const availableBodyHeight = Math.max(grid.clientHeight - headerHeight, 240);
 
+    // Leghosszabb név és egyesület karakterszáma a dinamikus skálázáshoz
+    const maxNameLen = players.reduce((max, p) => Math.max(max, String(p.name || '').length), 10);
+    const maxClubLen = players.reduce((max, p) => Math.max(max, String(p.club || '').length), 8);
+
+    // Egy oszlop becsült elérhető szélessége (1920px-en ~920px oszloponként)
+    const singleColWidth = Math.max(grid.clientWidth / 2 - 12, 400);
+    // Fixebb szám/statisztikai oszlopok kb. 455px-t foglalnak el
+    const fixedColsWidth = 455;
+    const textBudget = Math.max(singleColWidth - fixedColsWidth, 180);
+
+    // Név és egyesület arányos szélesség-kerete
+    const nameShare = textBudget * 0.58;
+    const clubShare = textBudget * 0.42;
+
+    // Név betűméret úgy, hogy a leghosszabb név is kiférjen levágás nélkül
+    const nameByWidthPx = (nameShare / Math.max(maxNameLen * 0.56, 6));
     const computedRowHeight = Math.min(availableBodyHeight / safeRows, 120);
-
-    const cellFontPx = Math.max(16, Math.min(computedRowHeight * 0.34, 32));
-    const totalFontPx = cellFontPx * 1.12;
-    const headerFontPx = Math.max(15, Math.min(cellFontPx * 0.85, 24));
-    const padY = Math.max(4, Math.min(computedRowHeight * 0.12, 16));
-
-    const root = document.documentElement.style;
-    root.setProperty('--row-height', `${computedRowHeight.toFixed(1)}px`);
-    root.setProperty('--cell-font', `${cellFontPx.toFixed(1)}px`);
-    root.setProperty('--total-font', `${totalFontPx.toFixed(1)}px`);
-    root.setProperty('--header-font', `${headerFontPx.toFixed(1)}px`);
-    root.setProperty('--cell-pad-y', `${padY.toFixed(1)}px`);
-}
-
-function renderBoard(players) {
-    const sorted = [...players].sort((a, b) => {
-        if (b.total !== a.total) return b.total - a.total;
-        if (b.tarol !== a.tarol) return b.tarol - a.tarol;
-        if (a.ures !== b.ures) return a.ures - b.ures;
-        return 0;
-    });
-
-    const splitIndex = Math.max(1, Math.ceil(sorted.length / 2));
-    updateDynamicSizing(splitIndex);
-
-    const body1 = document.getElementById('boardBody1');
-    const body2 = document.getElementById('boardBody2');
-    body1.innerHTML = '';
-    body2.innerHTML = '';
-
-    let currentRank = 1;
-
-    sorted.forEach((player, index) => {
-        if (index > 0) {
-            const prev = sorted[index - 1];
-            const isEqual = (player.total === prev.total) &&
-                            (player.tarol === prev.tarol) &&
-                            (player.ures === prev.ures);
-            if (!isEqual) currentRank = index + 1;
-        }
-
-        const tr = document.createElement('tr');
-        if (currentRank <= 3 && player.total > 0) tr.className = 'top3';
-
-        const setsHTML = (player.sets || [0, 0, 0, 0]).map(s => {
-            if (!s || s === 0) return `<td class="set-col">-</td>`;
-            return `<td class="set-col ${getSetColorClass(s)}">${s}</td>`;
-        }).join('');
-
-        const clubText = player.club || '-';
-
-        tr.innerHTML = `
-            <td class="rank-col">${currentRank}.</td>
-            <td class="name-col" title="${player.name || ''}">${player.name || '-'}</td>
-            <td class="club-col" title="${clubText}">${clubText}</td>
-            <td class="total-col ${getTotalColorClass(player.total || 0)}">${player.total || 0}</td>
-            ${setsHTML}
-            <td class="stat-col">${player.teli ?? 0}</td>
-            <td class="stat-col">${player.tarol ?? 0}</td>
-            <td class="stat-col ${getUresColorClass(player.ures ?? 0)}">${player.ures ?? 0}</td>
-        `;
-
-        if (index < splitIndex) body1.appendChild(tr);
-        else body2.appendChild(tr);
-    });
-}
-
-window.addEventListener('resize', () => {
-    if (lastPlayers.length > 0) {
-        renderBoard(lastPlayers);
-    }
-});
-</script>
-</body>
-</html>
+    const heightDrivenFont = computedRowHeight * 0.
