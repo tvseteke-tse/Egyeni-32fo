@@ -4,9 +4,18 @@
 <meta charset="UTF-8">
 <title>Egyéni Teke - Színes Ranglista (Online - 1920x1080)</title>
 <style>
+    :root {
+        --row-height: 44px;
+        --cell-font: 1.15rem;
+        --total-font: 1.3rem;
+        --header-font: 1.05rem;
+        --cell-pad-y: 8px;
+    }
+
     * {
         box-sizing: border-box;
     }
+
     body {
         background-color: #00122e;
         color: #ffff00;
@@ -18,73 +27,92 @@
         height: 100vh;
         overflow: hidden;
     }
+
     .board-container {
         width: 100%;
         height: 100%;
         background: #001c47;
         border: 3px solid #0044aa;
         border-radius: 12px;
-        padding: 15px;
+        padding: 15px 20px;
         box-shadow: 0 0 30px rgba(0, 50, 150, 0.7);
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
     }
+
     h1 {
         text-align: center;
-        margin: 0 0 10px 0;
+        margin: 0 0 12px 0;
         font-size: 2.4rem;
         color: #ffff00;
         letter-spacing: 3px;
         text-transform: uppercase;
         text-shadow: 0 0 12px rgba(255, 255, 0, 0.5);
+        flex-shrink: 0;
     }
-    .table-grid { 
-        display: grid; 
-        grid-template-columns: 1fr 1fr; 
-        gap: 20px; 
-        flex-grow: 1;
-        overflow: hidden;
+
+    .table-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        flex: 1;
+        min-height: 0;
+        align-content: stretch;
     }
-    table { 
-        width: 100%; 
-        border-collapse: collapse; 
-        font-family: 'Courier New', Courier, monospace; 
+
+    table {
+        width: 100%;
+        height: 100%;
+        border-collapse: collapse;
+        font-family: 'Courier New', Courier, monospace;
+        table-layout: fixed;
     }
-    th { 
-        color: #ffff00; 
-        border-bottom: 3px solid #0044aa; 
-        padding: 10px 4px; 
-        font-size: 1rem; 
-        background-color: #001536; 
+
+    thead {
+        height: 44px;
     }
-    
+
+    th {
+        color: #ffff00;
+        border-bottom: 3px solid #0044aa;
+        padding: 8px 4px;
+        font-size: var(--header-font);
+        background-color: #001536;
+        white-space: nowrap;
+    }
+
+    tbody tr {
+        height: var(--row-height);
+        transition: background-color 0.2s ease;
+    }
+
     /* Sorok elkülönítése */
     tbody tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.03); }
     tbody tr:nth-child(odd) { background-color: rgba(0, 0, 0, 0.2); }
     tbody tr:hover { background-color: rgba(0, 85, 204, 0.3) !important; }
 
-    td { 
-        padding: 8px 4px; 
-        text-align: center; 
-        border-bottom: 1px solid #003380; 
-        font-size: 1.05rem; 
-        font-weight: bold; 
+    td {
+        padding: var(--cell-pad-y) 4px;
+        text-align: center;
+        border-bottom: 1px solid #003380;
+        font-size: var(--cell-font);
+        font-weight: bold;
+        line-height: 1.1;
     }
-    
-    .rank-col { width: 40px; color: #ffffff; font-weight: bold; text-align: center; }
-    .name-col { text-align: left; font-family: sans-serif; color: #ffff00; width: 130px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .club-col { text-align: left; font-family: sans-serif; color: #58a6ff; font-weight: normal; font-size: 0.95rem; width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .stat-col { color: #8b949e; font-size: 1.05rem; }
-    
+
+    .rank-col { width: 48px; color: #ffffff; font-weight: bold; text-align: center; }
+    .name-col { text-align: left; font-family: sans-serif; color: #ffff00; width: 165px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .club-col { text-align: left; font-family: sans-serif; color: #58a6ff; font-weight: normal; font-size: calc(var(--cell-font) * 0.9); width: 135px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stat-col { color: #8b949e; font-size: calc(var(--cell-font) * 0.95); }
+
     .color-green { color: #00ff66 !important; text-shadow: 0 0 6px rgba(0, 255, 102, 0.5); }
     .color-yellow { color: #ffff00 !important; text-shadow: 0 0 6px rgba(255, 255, 0, 0.5); }
     .color-red { color: #ff3333 !important; text-shadow: 0 0 6px rgba(255, 51, 51, 0.5); }
 
-    .total-col { font-weight: bold; font-size: 1.2rem; }
+    .total-col { font-weight: bold; font-size: var(--total-font); }
     tr.top3 { background-color: rgba(0, 68, 170, 0.45) !important; }
     tr.top3:nth-child(even) { background-color: rgba(0, 80, 195, 0.5) !important; }
-    tr.top3 .rank-col { color: #ffff00; font-size: 1.15rem; }
+    tr.top3 .rank-col { color: #ffff00; font-size: calc(var(--cell-font) * 1.1); }
 </style>
 
 <!-- Firebase SDK-k -->
@@ -95,7 +123,7 @@
 
 <div class="board-container">
     <h1 id="boardTitle">EGYÉNI BAJNOKSÁG</h1>
-    <div class="table-grid">
+    <div class="table-grid" id="tableGrid">
         <table>
             <thead>
                 <tr>
@@ -144,11 +172,16 @@ if (!firebase.apps.length) {
 }
 const db = firebase.database();
 
+let lastPlayers = [];
+
 db.ref('egyeni_bowling').on('value', (snapshot) => {
     const data = snapshot.val();
     if (data) {
         if (data.title) document.getElementById('boardTitle').innerText = data.title.toUpperCase();
-        if (data.players) renderBoard(data.players);
+        if (data.players) {
+            lastPlayers = data.players;
+            renderBoard(lastPlayers);
+        }
     }
 });
 
@@ -172,6 +205,29 @@ function getUresColorClass(val) {
     return 'color-red';
 }
 
+function updateDynamicSizing(rowsPerCol) {
+    const grid = document.getElementById('tableGrid');
+    const safeRows = Math.max(rowsPerCol, 1);
+    const headerHeight = 44;
+    const availableBodyHeight = Math.max(grid.clientHeight - headerHeight, 200);
+
+    // Oszloponkénti sorok alapján számolt magasság (felső korláttal, hogy kevés játékosnál se legyen óriási)
+    const computedRowHeight = Math.min(availableBodyHeight / safeRows, 110);
+
+    // Arányos betűméretek és függőleges padding
+    const cellFontPx = Math.max(15, Math.min(computedRowHeight * 0.44, 34));
+    const totalFontPx = cellFontPx * 1.15;
+    const headerFontPx = Math.max(15, Math.min(cellFontPx * 0.92, 26));
+    const padY = Math.max(4, Math.min(computedRowHeight * 0.14, 18));
+
+    const root = document.documentElement.style;
+    root.setProperty('--row-height', `${computedRowHeight.toFixed(1)}px`);
+    root.setProperty('--cell-font', `${cellFontPx.toFixed(1)}px`);
+    root.setProperty('--total-font', `${totalFontPx.toFixed(1)}px`);
+    root.setProperty('--header-font', `${headerFontPx.toFixed(1)}px`);
+    root.setProperty('--cell-pad-y', `${padY.toFixed(1)}px`);
+}
+
 function renderBoard(players) {
     const sorted = [...players].sort((a, b) => {
         if (b.total !== a.total) return b.total - a.total;
@@ -179,6 +235,9 @@ function renderBoard(players) {
         if (a.ures !== b.ures) return a.ures - b.ures;
         return 0;
     });
+
+    const splitIndex = Math.ceil(sorted.length / 2);
+    updateDynamicSizing(splitIndex);
 
     const body1 = document.getElementById('boardBody1');
     const body2 = document.getElementById('boardBody2');
@@ -190,8 +249,8 @@ function renderBoard(players) {
     sorted.forEach((player, index) => {
         if (index > 0) {
             const prev = sorted[index - 1];
-            const isEqual = (player.total === prev.total) && 
-                            (player.tarol === prev.tarol) && 
+            const isEqual = (player.total === prev.total) &&
+                            (player.tarol === prev.tarol) &&
                             (player.ures === prev.ures);
             if (!isEqual) currentRank = index + 1;
         }
@@ -199,8 +258,8 @@ function renderBoard(players) {
         const tr = document.createElement('tr');
         if (currentRank <= 3 && player.total > 0) tr.className = 'top3';
 
-        const setsHTML = player.sets.map(s => {
-            if (s === 0) return `<td>-</td>`;
+        const setsHTML = (player.sets || [0, 0, 0, 0]).map(s => {
+            if (!s || s === 0) return `<td>-</td>`;
             return `<td class="${getSetColorClass(s)}">${s}</td>`;
         }).join('');
 
@@ -208,19 +267,19 @@ function renderBoard(players) {
 
         tr.innerHTML = `
             <td class="rank-col">${currentRank}.</td>
-            <td class="name-col">${player.name}</td>
+            <td class="name-col" title="${player.name || ''}">${player.name || '-'}</td>
             <td class="club-col" title="${clubText}">${clubText}</td>
-            <td class="total-col ${getTotalColorClass(player.total)}">${player.total}</td>
+            <td class="total-col ${getTotalColorClass(player.total || 0)}">${player.total || 0}</td>
             ${setsHTML}
-            <td class="stat-col">${player.teli}</td>
-            <td class="stat-col">${player.tarol}</td>
-            <td class="stat-col ${getUresColorClass(player.ures)}">${player.ures}</td>
+            <td class="stat-col">${player.teli ?? 0}</td>
+            <td class="stat-col">${player.tarol ?? 0}</td>
+            <td class="stat-col ${getUresColorClass(player.ures ?? 0)}">${player.ures ?? 0}</td>
         `;
 
-        if (index < 16) body1.appendChild(tr);
+        if (index < splitIndex) body1.appendChild(tr);
         else body2.appendChild(tr);
     });
 }
-</script>
-</body>
-</html>
+
+window.addEventListener('resize', () => {
+    if (lastPlayers.length >
