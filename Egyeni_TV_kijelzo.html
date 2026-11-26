@@ -5,13 +5,13 @@
 <title>Egyéni Teke - Színes Ranglista (Online - 1920x1080)</title>
 <style>
     :root {
-        --row-height: 58px;
-        --cell-font: 1.2rem;
-        --name-font: 1.2rem;
-        --club-font: 1.05rem;
-        --total-font: 1.35rem;
-        --header-font: 1.05rem;
-        --cell-pad-y: 8px;
+        --row-height: 50px;
+        --cell-font: 1.1rem;
+        --name-font: 1.1rem;
+        --club-font: 0.95rem;
+        --total-font: 1.25rem;
+        --header-font: 1rem;
+        --cell-pad-y: 4px;
     }
 
     * {
@@ -31,7 +31,7 @@
     }
 
     body {
-        padding: 12px;
+        padding: 10px;
     }
 
     .board-container {
@@ -40,16 +40,17 @@
         background: #001c47;
         border: 3px solid #0044aa;
         border-radius: 12px;
-        padding: 16px 22px;
+        padding: 14px 18px;
         box-shadow: 0 0 30px rgba(0, 50, 150, 0.7);
         display: flex;
         flex-direction: column;
+        overflow: hidden;
     }
 
     h1 {
         text-align: center;
-        margin: 0 0 14px 0;
-        font-size: 2.3rem;
+        margin: 0 0 10px 0;
+        font-size: 2.1rem;
         color: #ffff00;
         letter-spacing: 2px;
         text-transform: uppercase;
@@ -62,32 +63,33 @@
 
     .table-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 24px;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 18px;
         flex: 1 1 auto;
         min-height: 0;
+        overflow: hidden;
     }
 
     table {
         width: 100%;
-        height: 100%;
         border-collapse: collapse;
         font-family: 'Courier New', Courier, monospace;
-        table-layout: auto;
+        table-layout: fixed;
     }
 
-    thead {
-        height: 46px;
+    thead tr {
+        height: 40px;
     }
 
     th {
         color: #ffff00;
         border-bottom: 3px solid #0044aa;
-        padding: 8px 5px;
+        padding: 6px 3px;
         font-size: var(--header-font);
         background-color: #001536;
         white-space: nowrap;
         text-align: center;
+        overflow: hidden;
     }
 
     th.name-col, th.club-col {
@@ -104,35 +106,38 @@
     tbody tr:hover { background-color: rgba(0, 85, 204, 0.3) !important; }
 
     td {
-        padding: var(--cell-pad-y) 5px;
+        padding: var(--cell-pad-y) 3px;
         text-align: center;
         border-bottom: 1px solid #003380;
         font-size: var(--cell-font);
         font-weight: bold;
-        line-height: 1.15;
+        line-height: 1.1;
         white-space: nowrap;
+        overflow: hidden;
     }
 
     .rank-col {
-        width: 44px;
+        width: 5%;
         color: #ffffff;
         font-weight: bold;
         text-align: center;
     }
 
-    /* Teljes név kiírása levágás nélkül */
+    /* Teljes név kiírása levágás nélkül a saját oszlopán belül */
     .name-col {
+        width: 25%;
         text-align: left;
         font-family: sans-serif;
         color: #ffff00;
         font-size: var(--name-font);
         white-space: nowrap;
-        overflow: visible;
+        overflow: hidden;
         text-overflow: clip;
-        padding-right: 12px;
+        padding-right: 6px;
     }
 
     .club-col {
+        width: 17%;
         text-align: left;
         font-family: sans-serif;
         color: #58a6ff;
@@ -141,18 +146,21 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 170px;
-        padding-right: 8px;
+        padding-right: 6px;
     }
 
     .total-col {
+        width: 9%;
         font-weight: bold;
         font-size: var(--total-font);
-        padding-left: 8px;
-        padding-right: 8px;
+    }
+
+    .set-col {
+        width: 6.5%;
     }
 
     .stat-col {
+        width: 6%;
         color: #8b949e;
         font-size: var(--cell-font);
     }
@@ -163,7 +171,7 @@
 
     tr.top3 { background-color: rgba(0, 68, 170, 0.45) !important; }
     tr.top3:nth-child(even) { background-color: rgba(0, 80, 195, 0.5) !important; }
-    tr.top3 .rank-col { color: #ffff00; font-size: calc(var(--cell-font) * 1.08); }
+    tr.top3 .rank-col { color: #ffff00; font-size: calc(var(--cell-font) * 1.06); }
 </style>
 
 <!-- Firebase SDK-k -->
@@ -182,10 +190,13 @@
                     <th class="name-col">Név</th>
                     <th class="club-col">Egyesület</th>
                     <th class="total-col">Össz.</th>
-                    <th>S1</th><th>S2</th><th>S3</th><th>S4</th>
-                    <th>Teli</th>
-                    <th>Tarol</th>
-                    <th>Üres</th>
+                    <th class="set-col">S1</th>
+                    <th class="set-col">S2</th>
+                    <th class="set-col">S3</th>
+                    <th class="set-col">S4</th>
+                    <th class="stat-col">Teli</th>
+                    <th class="stat-col">Tarol</th>
+                    <th class="stat-col">Üres</th>
                 </tr>
             </thead>
             <tbody id="boardBody1"></tbody>
@@ -198,10 +209,13 @@
                     <th class="name-col">Név</th>
                     <th class="club-col">Egyesület</th>
                     <th class="total-col">Össz.</th>
-                    <th>S1</th><th>S2</th><th>S3</th><th>S4</th>
-                    <th>Teli</th>
-                    <th>Tarol</th>
-                    <th>Üres</th>
+                    <th class="set-col">S1</th>
+                    <th class="set-col">S2</th>
+                    <th class="set-col">S3</th>
+                    <th class="set-col">S4</th>
+                    <th class="stat-col">Teli</th>
+                    <th class="stat-col">Tarol</th>
+                    <th class="stat-col">Üres</th>
                 </tr>
             </thead>
             <tbody id="boardBody2"></tbody>
@@ -259,27 +273,27 @@ function getUresColorClass(val) {
 function updateDynamicSizing(players, rowsPerCol) {
     const grid = document.getElementById('tableGrid');
     const safeRows = Math.max(rowsPerCol, 1);
-    const headerHeight = 46;
-    const availableBodyHeight = Math.max(grid.clientHeight - headerHeight, 240);
+    const theadHeight = 42;
+    const availableBodyHeight = Math.max(grid.clientHeight - theadHeight - 2, 180);
 
-    // Leghosszabb név hossza karakterben
-    const maxNameLen = players.reduce((max, p) => Math.max(max, String(p.name || '').length), 10);
-
-    // Magasságból adódó dinamikus méret (24 főnél 12 sor -> nagyobb betűk, több főnél kisebb)
-    const computedRowHeight = Math.min(availableBodyHeight / safeRows, 110);
+    // Pontos sormagasság, hogy minden sor beleférjen alul vágás nélkül
+    const computedRowHeight = Math.min(availableBodyHeight / safeRows, 100);
     const heightDrivenFont = computedRowHeight * 0.36;
 
-    // Szélességből adódó korlát, hogy a leghosszabb név is kiférjen levágás nélkül
-    const colWidth = Math.max(grid.clientWidth / 2 - 12, 420);
-    const availableForName = Math.max(colWidth * 0.30, 180);
-    const nameByWidthPx = availableForName / Math.max(maxNameLen * 0.56, 6);
+    // Leghosszabb név hossza (pl. "Szabó Zsombor(MESE)" -> ~19 karakter)
+    const maxNameLen = players.reduce((max, p) => Math.max(max, String(p.name || '').length), 10);
 
-    const nameFontPx = Math.max(14, Math.min(heightDrivenFont, nameByWidthPx, 28));
-    const cellFontPx = Math.max(14, Math.min(heightDrivenFont, 28));
-    const clubFontPx = Math.max(12, Math.min(cellFontPx * 0.86, 22));
+    // Egy fél tábla szélességéből a .name-col kb. 25%-ot kap
+    const halfGridWidth = Math.max(grid.clientWidth / 2 - 9, 360);
+    const nameColPx = halfGridWidth * 0.25 - 8;
+    const nameByWidthPx = nameColPx / Math.max(maxNameLen * 0.56, 6);
+
+    const nameFontPx = Math.max(12, Math.min(heightDrivenFont, nameByWidthPx, 26));
+    const cellFontPx = Math.max(13, Math.min(heightDrivenFont, 25));
+    const clubFontPx = Math.max(11, Math.min(cellFontPx * 0.85, 20));
     const totalFontPx = cellFontPx * 1.12;
-    const headerFontPx = Math.max(14, Math.min(cellFontPx * 0.85, 24));
-    const padY = Math.max(4, Math.min(computedRowHeight * 0.12, 16));
+    const headerFontPx = Math.max(12, Math.min(cellFontPx * 0.85, 21));
+    const padY = Math.max(2, Math.min(computedRowHeight * 0.08, 12));
 
     const root = document.documentElement.style;
     root.setProperty('--row-height', `${computedRowHeight.toFixed(1)}px`);
@@ -322,15 +336,15 @@ function renderBoard(players) {
         if (currentRank <= 3 && player.total > 0) tr.className = 'top3';
 
         const setsHTML = player.sets.map(s => {
-            if (s === 0) return `<td>-</td>`;
-            return `<td class="${getSetColorClass(s)}">${s}</td>`;
+            if (s === 0) return `<td class="set-col">-</td>`;
+            return `<td class="set-col ${getSetColorClass(s)}">${s}</td>`;
         }).join('');
 
         const clubText = player.club || '-';
 
         tr.innerHTML = `
             <td class="rank-col">${currentRank}.</td>
-            <td class="name-col">${player.name}</td>
+            <td class="name-col" title="${player.name}">${player.name}</td>
             <td class="club-col" title="${clubText}">${clubText}</td>
             <td class="total-col ${getTotalColorClass(player.total)}">${player.total}</td>
             ${setsHTML}
