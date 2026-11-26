@@ -38,6 +38,7 @@
         box-shadow: 0 0 30px rgba(0, 50, 150, 0.7);
         display: flex;
         flex-direction: column;
+        position: relative;
     }
 
     h1 {
@@ -113,6 +114,35 @@
     tr.top3 { background-color: rgba(0, 68, 170, 0.45) !important; }
     tr.top3:nth-child(even) { background-color: rgba(0, 80, 195, 0.5) !important; }
     tr.top3 .rank-col { color: #ffff00; font-size: calc(var(--cell-font) * 1.1); }
+
+    .status-bar {
+        margin-top: 8px;
+        font-size: 0.85rem;
+        color: #8b949e;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .status-error {
+        color: #ff6666;
+        font-weight: bold;
+    }
+
+    .demo-btn {
+        background: #0044aa;
+        color: #ffff00;
+        border: 1px solid #58a6ff;
+        border-radius: 5px;
+        padding: 3px 10px;
+        font-size: 0.8rem;
+        cursor: pointer;
+    }
+
+    .demo-btn:hover {
+        background: #0055cc;
+    }
 </style>
 
 <!-- Firebase SDK-k -->
@@ -156,6 +186,11 @@
             <tbody id="boardBody2"></tbody>
         </table>
     </div>
+
+    <div class="status-bar">
+        <span id="statusText">Csatlakozás a Firebase adatbázishoz (egyeni_bowling)...</span>
+        <button type="button" class="demo-btn" id="loadDemoBtn">24 fős tesztadat betöltése</button>
+    </div>
 </div>
 
 <script>
@@ -167,22 +202,108 @@ const firebaseConfig = {
     storageBucket: "teke-eredmenyek.appspot.com"
 };
 
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-const db = firebase.database();
-
 let lastPlayers = [];
+let hasLiveData = false;
 
-db.ref('egyeni_bowling').on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-        if (data.title) document.getElementById('boardTitle').innerText = data.title.toUpperCase();
-        if (data.players) {
-            lastPlayers = data.players;
-            renderBoard(lastPlayers);
+function setStatus(msg, isError = false) {
+    const el = document.getElementById('statusText');
+    el.textContent = msg;
+    el.className = isError ? 'status-error' : '';
+}
+
+function normalizePlayers(rawPlayers) {
+    if (!rawPlayers) return [];
+
+    const list = Array.isArray(rawPlayers)
+        ? rawPlayers.filter(Boolean)
+        : (typeof rawPlayers === 'object' ? Object.values(rawPlayers).filter(Boolean) : []);
+
+    return list.map((p) => {
+        let sets = [0, 0, 0, 0];
+        if (Array.isArray(p.sets)) {
+            sets = [0, 1, 2, 3].map((i) => Number(p.sets[i]) || 0);
+        } else if (p.sets && typeof p.sets === 'object') {
+            sets = [0, 1, 2, 3].map((i) => Number(p.sets[i] ?? p.sets[`s${i + 1}`] ?? p.sets[`S${i + 1}`]) || 0);
+        } else {
+            sets = [
+                Number(p.s1 ?? p.S1) || 0,
+                Number(p.s2 ?? p.S2) || 0,
+                Number(p.s3 ?? p.S3) || 0,
+                Number(p.s4 ?? p.S4) || 0
+            ];
         }
+
+        const sumSets = sets.reduce((acc, v) => acc + v, 0);
+        const total = (p.total !== undefined && p.total !== null && p.total !== '')
+            ? (Number(p.total) || 0)
+            : sumSets;
+
+        return {
+            name: p.name || p.nev || '-',
+            club: p.club || p.egyesulet || '-',
+            total,
+            sets,
+            teli: Number(p.teli ?? p.full ?? 0) || 0,
+            tarol: Number(p.tarol ?? p.clean ?? 0) || 0,
+            ures: Number(p.ures ?? p.error ?? 0) || 0
+        };
+    });
+}
+
+function generateDemoPlayers(count = 24) {
+    const clubs = ['Szeged TE', 'Zalaegerszeg', 'BKV Előre', 'Répcelak', 'Kaposvár', 'Pápai PE'];
+    return Array.from({ length: count }, (_, i) => {
+        const s1 = 130 + ((i * 11) % 40);
+        const s2 = 125 + ((i * 7) % 45);
+        const s3 = 120 + ((i * 13) % 42);
+        const s4 = 128 + ((i * 9) % 38);
+        return {
+            name: `Játékos ${i + 1}`,
+            club: clubs[i % clubs.length],
+            total: s1 + s2 + s3 + s4,
+            sets: [s1, s2, s3, s4],
+            teli: 85 + (i % 30),
+            tarol: 20 + ((i * 3) % 18),
+            ures: i % 8
+        };
+    });
+}
+
+try {
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
     }
+    const db = firebase.database();
+
+    db.ref('egyeni_bowling').on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) {
+            if (!hasLiveData) {
+                setStatus("A Firebase 'egyeni_bowling' ága jelenleg üres (nincs adat a szerveren).", true);
+            }
+            return;
+        }
+
+        hasLiveData = true;
+        if (data.title) {
+            document.getElementById('boardTitle').innerText = String(data.title).toUpperCase();
+        }
+
+        const normalized = normalizePlayers(data.players || data);
+        lastPlayers = normalized;
+        renderBoard(lastPlayers);
+        setStatus(`Élő adat frissítve – Játékosok száma: ${lastPlayers.length} fő`);
+    }, (error) => {
+        setStatus(`Firebase olvasási hiba: ${error.message}`, true);
+    });
+} catch (err) {
+    setStatus(`Firebase inicializálási hiba: ${err.message}`, true);
+}
+
+document.getElementById('loadDemoBtn').addEventListener('click', () => {
+    lastPlayers = generateDemoPlayers(24);
+    renderBoard(lastPlayers);
+    setStatus('24 fős tesztadat megjelenítve (dinamikus méretezés aktív).');
 });
 
 function getSetColorClass(val) {
@@ -211,10 +332,8 @@ function updateDynamicSizing(rowsPerCol) {
     const headerHeight = 44;
     const availableBodyHeight = Math.max(grid.clientHeight - headerHeight, 200);
 
-    // Oszloponkénti sorok alapján számolt magasság (felső korláttal, hogy kevés játékosnál se legyen óriási)
     const computedRowHeight = Math.min(availableBodyHeight / safeRows, 110);
 
-    // Arányos betűméretek és függőleges padding
     const cellFontPx = Math.max(15, Math.min(computedRowHeight * 0.44, 34));
     const totalFontPx = cellFontPx * 1.15;
     const headerFontPx = Math.max(15, Math.min(cellFontPx * 0.92, 26));
@@ -236,7 +355,7 @@ function renderBoard(players) {
         return 0;
     });
 
-    const splitIndex = Math.ceil(sorted.length / 2);
+    const splitIndex = Math.max(1, Math.ceil(sorted.length / 2));
     updateDynamicSizing(splitIndex);
 
     const body1 = document.getElementById('boardBody1');
@@ -282,4 +401,10 @@ function renderBoard(players) {
 }
 
 window.addEventListener('resize', () => {
-    if (lastPlayers.length >
+    if (lastPlayers.length > 0) {
+        renderBoard(lastPlayers);
+    }
+});
+</script>
+</body>
+</html>
