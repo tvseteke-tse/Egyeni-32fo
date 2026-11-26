@@ -35,7 +35,22 @@
     }
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 12px; }
     .card { background: #1e1e1e; padding: 10px; border-radius: 6px; border: 1px solid #333; }
-    .card-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; color: #8b949e; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-weight: bold; color: #8b949e; }
+    .delete-player-btn {
+        background: transparent;
+        border: 1px solid #444;
+        color: #f85149;
+        border-radius: 4px;
+        padding: 2px 7px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .delete-player-btn:hover {
+        background: #da3633;
+        border-color: #da3633;
+        color: white;
+    }
     .row { display: flex; gap: 5px; align-items: center; margin-bottom: 6px; }
     input[type="text"].p-name, input[type="text"].p-club { 
         flex: 1; background: #2a2a2a; border: 1px solid #444; color: white; padding: 6px; border-radius: 4px; font-weight: bold; 
@@ -93,6 +108,7 @@ function createCards() {
             <div class="card" data-idx="${i}">
                 <div class="card-header">
                     <span>#${i + 1} Játékos</span>
+                    <button type="button" class="delete-player-btn" title="Játékos adatainak törlése" onclick="deletePlayer(${i})">🗑️</button>
                 </div>
                 <div class="row">
                     <input type="text" class="p-name" placeholder="Játékos neve" oninput="sendData()">
@@ -132,111 +148,4 @@ function initFirebaseSync() {
                 if (cards[idx]) {
                     const card = cards[idx];
                     const nameInput = card.querySelector('.p-name');
-                    const clubInput = card.querySelector('.p-club');
-                    
-                    if (document.activeElement !== nameInput) {
-                        nameInput.value = (player.name && !player.name.startsWith('Játékos ')) ? player.name : '';
-                    }
-
-                    if (document.activeElement !== clubInput) {
-                        clubInput.value = player.club || '';
-                    }
-
-                    for (let s = 0; s < 4; s++) {
-                        const teliInp = card.querySelector(`.p-teli${s}`);
-                        const tarolInp = card.querySelector(`.p-tarol${s}`);
-                        const uresInp = card.querySelector(`.p-ures${s}`);
-
-                        if (player.rawSets && player.rawSets[s]) {
-                            if (document.activeElement !== teliInp) teliInp.value = player.rawSets[s].teli !== undefined ? player.rawSets[s].teli : '';
-                            if (document.activeElement !== tarolInp) tarolInp.value = player.rawSets[s].tarol !== undefined ? player.rawSets[s].tarol : '';
-                            if (document.activeElement !== uresInp) uresInp.value = player.rawSets[s].ures !== undefined ? player.rawSets[s].ures : '';
-                        }
-                    }
-                }
-            });
-        }
-    });
-}
-
-function sendData() {
-    if (!db) return;
-
-    const title = document.getElementById('tournamentTitle').value || 'Egyéni Bajnokság';
-    const players = [];
-    const cards = document.querySelectorAll('.card');
-
-    cards.forEach((card, idx) => {
-        const name = card.querySelector('.p-name').value;
-        const club = card.querySelector('.p-club').value;
-        
-        let totalTeli = 0, totalTarol = 0, totalUres = 0;
-        const sets = [];
-        const rawSets = [];
-
-        for (let s = 0; s < 4; s++) {
-            const teliVal = card.querySelector(`.p-teli${s}`).value;
-            const tarolVal = card.querySelector(`.p-tarol${s}`).value;
-            const uresVal = card.querySelector(`.p-ures${s}`).value;
-
-            const teli = parseInt(teliVal) || 0;
-            const tarol = parseInt(tarolVal) || 0;
-            const ures = parseInt(uresVal) || 0;
-
-            totalTeli += teli;
-            totalTarol += tarol;
-            totalUres += ures;
-            sets.push(teli + tarol);
-
-            rawSets.push({
-                teli: teliVal !== '' ? teli : '',
-                tarol: tarolVal !== '' ? tarol : '',
-                ures: uresVal !== '' ? ures : ''
-            });
-        }
-
-        players.push({
-            id: idx + 1,
-            name: name || `Játékos ${idx + 1}`,
-            club: club || '',
-            sets: sets,
-            rawSets: rawSets,
-            teli: totalTeli,
-            tarol: totalTarol,
-            ures: totalUres,
-            total: totalTeli + totalTarol
-        });
-    });
-
-    db.ref('egyeni_bowling').set({
-        title: title,
-        players: players
-    }).catch(err => console.error("Mentési hiba:", err));
-}
-
-function resetAll() {
-    if (confirm("Biztosan törölni szeretnéd az összes bevitt adatot? (A verseny neve megmarad)")) {
-        // A verseny nevének törlésére vonatkozó sor eltávolítva, így az változatlan marad!
-        
-        const cards = document.querySelectorAll('.card');
-        cards.forEach(card => {
-            card.querySelector('.p-name').value = '';
-            card.querySelector('.p-club').value = '';
-            
-            for (let s = 0; s < 4; s++) {
-                card.querySelector(`.p-teli${s}`).value = '';
-                card.querySelector(`.p-tarol${s}`).value = '';
-                card.querySelector(`.p-ures${s}`).value = '';
-            }
-        });
-
-        sendData();
-    }
-}
-
-// Futtatás indításkor
-createCards();
-initFirebaseSync();
-</script>
-</body>
-</html>
+                    const clubInput = card.querySelector
