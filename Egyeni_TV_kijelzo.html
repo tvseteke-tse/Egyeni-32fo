@@ -5,7 +5,7 @@
 <title>Egyéni Teke - Színes Ranglista (Online - 1920x1080)</title>
 <style>
     :root {
-        --row-height: 58px;
+        --row-height: 60px;
         --cell-font: 1.25rem;
         --name-font: 1.25rem;
         --club-font: 1.05rem;
@@ -66,7 +66,6 @@
         gap: 24px;
         flex: 1 1 auto;
         min-height: 0;
-        height: 100%;
     }
 
     table {
@@ -74,7 +73,7 @@
         height: 100%;
         border-collapse: collapse;
         font-family: 'Courier New', Courier, monospace;
-        table-layout: auto;
+        table-layout: fixed;
     }
 
     thead {
@@ -84,7 +83,7 @@
     th {
         color: #ffff00;
         border-bottom: 3px solid #0044aa;
-        padding: 8px 6px;
+        padding: 8px 4px;
         font-size: var(--header-font);
         background-color: #001536;
         white-space: nowrap;
@@ -106,7 +105,7 @@
     tbody tr:hover { background-color: rgba(0, 85, 204, 0.3) !important; }
 
     td {
-        padding: var(--cell-pad-y) 6px;
+        padding: var(--cell-pad-y) 4px;
         text-align: center;
         border-bottom: 1px solid #003380;
         font-size: var(--cell-font);
@@ -116,7 +115,7 @@
     }
 
     .rank-col {
-        width: 48px;
+        width: 46px;
         color: #ffffff;
         font-weight: bold;
         text-align: center;
@@ -124,6 +123,7 @@
 
     /* Teljes név megjelenítés levágás nélkül */
     .name-col {
+        width: 230px;
         text-align: left;
         font-family: sans-serif;
         color: #ffff00;
@@ -131,10 +131,11 @@
         white-space: nowrap;
         overflow: visible;
         text-overflow: clip;
-        padding-right: 12px;
+        padding-right: 10px;
     }
 
     .club-col {
+        width: 155px;
         text-align: left;
         font-family: sans-serif;
         color: #58a6ff;
@@ -143,8 +144,7 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        max-width: 210px;
-        padding-right: 10px;
+        padding-right: 8px;
     }
 
     .total-col {
@@ -154,11 +154,11 @@
     }
 
     .set-col {
-        width: 50px;
+        width: 48px;
     }
 
     .stat-col {
-        width: 62px;
+        width: 58px;
         color: #8b949e;
         font-size: var(--cell-font);
     }
@@ -244,91 +244,54 @@ function normalizePlayers(rawPlayers) {
         if (Array.isArray(p.sets)) {
             sets = [0, 1, 2, 3].map((i) => Number(p.sets[i]) || 0);
         } else if (p.sets && typeof p.sets === 'object') {
-            sets = [0, 1, 2, 3].map((i) => Number(p.sets[i] ?? p.sets[`s${i + 1}`] ?? p.sets[`S${i + 1}`]) || 0);
-        } else {
-            sets = [
-                Number(p.s1 ?? p.S1) || 0,
-                Number(p.s2 ?? p.S2) || 0,
-                Number(p.s3 ?? p.S3) || 0,
-                Number(p.s4 ?? p.S4) || 0
-            ];
+            sets = [0, 1, 2, 3].map((i) => Number(p.sets[i] ?? p.sets[`s${i + 1}`] ?? p.sets[`S${i + 1}`]) \vert{}\vert{} 0); } else { sets = [ Number(p.s1 ?? p.S1) \vert{}\vert{} 0, Number(p.s2 ?? p.S2) \vert{}\vert{} 0, Number(p.s3 ?? p.S3) \vert{}\vert{} 0, Number(p.s4 ?? p.S4) \vert{}\vert{} 0 ]; }  const sumSets = sets.reduce((acc, v) => acc + v, 0); const total = (p.total !== undefined && p.total !== null && p.total !== '') ? (Number(p.total) \vert{}\vert{} 0) : sumSets;  return { name: p.name \vert{}\vert{} p.nev \vert{}\vert{} '-', club: p.club \vert{}\vert{} p.egyesulet \vert{}\vert{} '-', total, sets, teli: Number(p.teli ?? p.full ?? 0) \vert{}\vert{} 0, tarol: Number(p.tarol ?? p.clean ?? 0) \vert{}\vert{} 0, ures: Number(p.ures ?? p.error ?? 0) \vert{}\vert{} 0 }; }); }  if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); } const db = firebase.database();  db.ref('egyeni_bowling').on('value', (snapshot) => { const data = snapshot.val(); if (!data) return;  if (data.title) { document.getElementById('boardTitle').innerText = String(data.title).toUpperCase(); }  lastPlayers = normalizePlayers(data.players \vert{}\vert{} data); renderBoard(lastPlayers); });  function getSetColorClass(val) { if (val === 0) return ''; if (val > 150) return 'color-green'; if (val < 120) return 'color-red'; return 'color-yellow'; }  function getTotalColorClass(val) { if (val === 0) return ''; if (val > 600) return 'color-green'; if (val < 500) return 'color-red'; return 'color-yellow'; }  function getUresColorClass(val) { if (val === 0) return 'color-green'; if (val <= 5) return 'color-yellow'; return 'color-red'; }  function fitBoardToContainer(players, rowsPerCol) { const grid = document.getElementById('tableGrid'); const safeRows = Math.max(rowsPerCol, 1); const headerHeight = 46; const availableBodyHeight = Math.max(grid.clientHeight - headerHeight, 240);  const maxNameLen = players.reduce((max, p) => Math.max(max, String(p.name \vert{}\vert{} '').length), 10); const maxClubLen = players.reduce((max, p) => Math.max(max, String(p.club \vert{}\vert{} '').length), 8);  const computedRowHeight = Math.min(availableBodyHeight / safeRows, 120); const heightDrivenFont = computedRowHeight * 0.36;  // Biztosítjuk, hogy a leghosszabb név is kiférjen a ~220px-es névoszlopban const nameWidthBudget = 215; const nameByWidthPx = nameWidthBudget / Math.max(maxNameLen * 0.58, 6);  const nameFontPx = Math.max(14, Math.min(heightDrivenFont, nameByWidthPx, 30)); const cellFontPx = Math.max(14, Math.min(heightDrivenFont, 28)); const clubFontPx = Math.max(12, Math.min(cellFontPx * 0.86, 150 / Math.max(maxClubLen * 0.54, 6), 22)); const totalFontPx = cellFontPx * 1.12; const headerFontPx = Math.max(14, Math.min(cellFontPx * 0.85, 24)); const padY = Math.max(4, Math.min(computedRowHeight * 0.12, 16));  const root = document.documentElement.style; root.setProperty('--row-height', `${computedRowHeight.toFixed(1)}px`);
+    root.setProperty('--cell-font', `${cellFontPx.toFixed(1)}px`); root.setProperty('--name-font', `${nameFontPx.toFixed(1)}px`);
+    root.setProperty('--club-font', `${clubFontPx.toFixed(1)}px`); root.setProperty('--total-font', `${totalFontPx.toFixed(1)}px`);
+    root.setProperty('--header-font', `${headerFontPx.toFixed(1)}px`); root.setProperty('--cell-pad-y', `${padY.toFixed(1)}px`);
+}
+
+function renderBoard(players) {
+    const sorted = [...players].sort((a, b) => {
+        if (b.total !== a.total) return b.total - a.total;
+        if (b.tarol !== a.tarol) return b.tarol - a.tarol;
+        if (a.ures !== b.ures) return a.ures - b.ures;
+        return 0;
+    });
+
+    const splitIndex = Math.max(1, Math.ceil(sorted.length / 2));
+    fitBoardToContainer(sorted, splitIndex);
+
+    const body1 = document.getElementById('boardBody1');
+    const body2 = document.getElementById('boardBody2');
+    body1.innerHTML = '';
+    body2.innerHTML = '';
+
+    let currentRank = 1;
+
+    sorted.forEach((player, index) => {
+        if (index > 0) {
+            const prev = sorted[index - 1];
+            const isEqual = (player.total === prev.total) &&
+                            (player.tarol === prev.tarol) &&
+                            (player.ures === prev.ures);
+            if (!isEqual) currentRank = index + 1;
         }
 
-        const sumSets = sets.reduce((acc, v) => acc + v, 0);
-        const total = (p.total !== undefined && p.total !== null && p.total !== '')
-            ? (Number(p.total) || 0)
-            : sumSets;
+        const tr = document.createElement('tr');
+        if (currentRank <= 3 && player.total > 0) tr.className = 'top3';
 
-        return {
-            name: p.name || p.nev || '-',
-            club: p.club || p.egyesulet || '-',
-            total,
-            sets,
-            teli: Number(p.teli ?? p.full ?? 0) || 0,
-            tarol: Number(p.tarol ?? p.clean ?? 0) || 0,
-            ures: Number(p.ures ?? p.error ?? 0) || 0
-        };
-    });
-}
+        const setsHTML = (player.sets || [0, 0, 0, 0]).map(s => {
+            if (!s || s === 0) return `<td class="set-col">-</td>`;
+            return `<td class="set-col ${getSetColorClass(s)}">${s}</td>`;
+        }).join('');
 
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-const db = firebase.database();
+        const clubText = player.club || '-';
 
-db.ref('egyeni_bowling').on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (!data) return;
-
-    if (data.title) {
-        document.getElementById('boardTitle').innerText = String(data.title).toUpperCase();
-    }
-
-    lastPlayers = normalizePlayers(data.players || data);
-    renderBoard(lastPlayers);
-});
-
-function getSetColorClass(val) {
-    if (val === 0) return '';
-    if (val > 150) return 'color-green';
-    if (val < 120) return 'color-red';
-    return 'color-yellow';
-}
-
-function getTotalColorClass(val) {
-    if (val === 0) return '';
-    if (val > 600) return 'color-green';
-    if (val < 500) return 'color-red';
-    return 'color-yellow';
-}
-
-function getUresColorClass(val) {
-    if (val === 0) return 'color-green';
-    if (val <= 5) return 'color-yellow';
-    return 'color-red';
-}
-
-function fitBoardToContainer(players, rowsPerCol) {
-    const grid = document.getElementById('tableGrid');
-    const safeRows = Math.max(rowsPerCol, 1);
-    const headerHeight = 46;
-    const availableBodyHeight = Math.max(grid.clientHeight - headerHeight, 240);
-
-    // Leghosszabb név és egyesület karakterszáma a dinamikus skálázáshoz
-    const maxNameLen = players.reduce((max, p) => Math.max(max, String(p.name || '').length), 10);
-    const maxClubLen = players.reduce((max, p) => Math.max(max, String(p.club || '').length), 8);
-
-    // Egy oszlop becsült elérhető szélessége (1920px-en ~920px oszloponként)
-    const singleColWidth = Math.max(grid.clientWidth / 2 - 12, 400);
-    // Fixebb szám/statisztikai oszlopok kb. 455px-t foglalnak el
-    const fixedColsWidth = 455;
-    const textBudget = Math.max(singleColWidth - fixedColsWidth, 180);
-
-    // Név és egyesület arányos szélesség-kerete
-    const nameShare = textBudget * 0.58;
-    const clubShare = textBudget * 0.42;
-
-    // Név betűméret úgy, hogy a leghosszabb név is kiférjen levágás nélkül
-    const nameByWidthPx = (nameShare / Math.max(maxNameLen * 0.56, 6));
-    const computedRowHeight = Math.min(availableBodyHeight / safeRows, 120);
-    const heightDrivenFont = computedRowHeight * 0.
+        tr.innerHTML = `
+            <td class="rank-col">${currentRank}.</td>
+            <td class="name-col">${player.name || '-'}</td>
+            <td class="club-col" title="${clubText}">${clubText}</td>
+            <td class="total-col ${getTotalColorClass(player.total || 0)}">${player.total \vert{}\vert{} 0}</td>${setsHTML}
+            <td class="stat-col">${player.teli ?? 0}</td>
+            <td class="stat-col">${player.tarol ?? 0}</td>
+            <td class="stat-col ${getUresColorClass(
