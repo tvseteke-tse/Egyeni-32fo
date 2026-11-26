@@ -5,10 +5,10 @@
 <title>Egyéni Teke - Színes Ranglista (Online - 1920x1080)</title>
 <style>
     :root {
-        --row-height: 44px;
-        --cell-font: 1.15rem;
-        --total-font: 1.3rem;
-        --header-font: 1.05rem;
+        --row-height: 60px;
+        --cell-font: 1.25rem;
+        --total-font: 1.4rem;
+        --header-font: 1.1rem;
         --cell-pad-y: 8px;
     }
 
@@ -16,16 +16,20 @@
         box-sizing: border-box;
     }
 
-    body {
+    html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
         background-color: #00122e;
         color: #ffff00;
-        margin: 0;
-        padding: 10px;
         font-family: 'Segoe UI', Arial, sans-serif;
         user-select: none;
-        width: 100vw;
-        height: 100vh;
         overflow: hidden;
+    }
+
+    body {
+        padding: 12px;
     }
 
     .board-container {
@@ -34,31 +38,33 @@
         background: #001c47;
         border: 3px solid #0044aa;
         border-radius: 12px;
-        padding: 15px 20px;
+        padding: 16px 22px;
         box-shadow: 0 0 30px rgba(0, 50, 150, 0.7);
         display: flex;
         flex-direction: column;
-        position: relative;
     }
 
     h1 {
         text-align: center;
-        margin: 0 0 12px 0;
-        font-size: 2.4rem;
+        margin: 0 0 14px 0;
+        font-size: 2.3rem;
         color: #ffff00;
-        letter-spacing: 3px;
+        letter-spacing: 2px;
         text-transform: uppercase;
         text-shadow: 0 0 12px rgba(255, 255, 0, 0.5);
         flex-shrink: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .table-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 24px;
-        flex: 1;
+        flex: 1 1 auto;
         min-height: 0;
-        align-content: stretch;
+        height: 100%;
     }
 
     table {
@@ -70,16 +76,17 @@
     }
 
     thead {
-        height: 44px;
+        height: 46px;
     }
 
     th {
         color: #ffff00;
         border-bottom: 3px solid #0044aa;
-        padding: 8px 4px;
+        padding: 8px 6px;
         font-size: var(--header-font);
         background-color: #001536;
         white-space: nowrap;
+        text-align: center;
     }
 
     tbody tr {
@@ -88,61 +95,35 @@
     }
 
     /* Sorok elkülönítése */
-    tbody tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.03); }
-    tbody tr:nth-child(odd) { background-color: rgba(0, 0, 0, 0.2); }
+    tbody tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.035); }
+    tbody tr:nth-child(odd) { background-color: rgba(0, 0, 0, 0.22); }
     tbody tr:hover { background-color: rgba(0, 85, 204, 0.3) !important; }
 
     td {
-        padding: var(--cell-pad-y) 4px;
+        padding: var(--cell-pad-y) 6px;
         text-align: center;
         border-bottom: 1px solid #003380;
         font-size: var(--cell-font);
         font-weight: bold;
         line-height: 1.1;
+        white-space: nowrap;
     }
 
-    .rank-col { width: 48px; color: #ffffff; font-weight: bold; text-align: center; }
-    .name-col { text-align: left; font-family: sans-serif; color: #ffff00; width: 165px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .club-col { text-align: left; font-family: sans-serif; color: #58a6ff; font-weight: normal; font-size: calc(var(--cell-font) * 0.9); width: 135px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .stat-col { color: #8b949e; font-size: calc(var(--cell-font) * 0.95); }
+    /* Fix oszlopszélességek, hogy ne érjenek össze a fejlécek */
+    .rank-col { width: 52px; color: #ffffff; font-weight: bold; text-align: center; }
+    .name-col { width: 175px; text-align: left; font-family: sans-serif; color: #ffff00; overflow: hidden; text-overflow: ellipsis; }
+    .club-col { width: 140px; text-align: left; font-family: sans-serif; color: #58a6ff; font-weight: normal; font-size: calc(var(--cell-font) * 0.88); overflow: hidden; text-overflow: ellipsis; }
+    .total-col { width: 82px; font-weight: bold; font-size: var(--total-font); }
+    .set-col { width: 52px; }
+    .stat-col { width: 64px; color: #8b949e; font-size: calc(var(--cell-font) * 0.95); }
 
     .color-green { color: #00ff66 !important; text-shadow: 0 0 6px rgba(0, 255, 102, 0.5); }
     .color-yellow { color: #ffff00 !important; text-shadow: 0 0 6px rgba(255, 255, 0, 0.5); }
     .color-red { color: #ff3333 !important; text-shadow: 0 0 6px rgba(255, 51, 51, 0.5); }
 
-    .total-col { font-weight: bold; font-size: var(--total-font); }
     tr.top3 { background-color: rgba(0, 68, 170, 0.45) !important; }
     tr.top3:nth-child(even) { background-color: rgba(0, 80, 195, 0.5) !important; }
-    tr.top3 .rank-col { color: #ffff00; font-size: calc(var(--cell-font) * 1.1); }
-
-    .status-bar {
-        margin-top: 8px;
-        font-size: 0.85rem;
-        color: #8b949e;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-shrink: 0;
-    }
-
-    .status-error {
-        color: #ff6666;
-        font-weight: bold;
-    }
-
-    .demo-btn {
-        background: #0044aa;
-        color: #ffff00;
-        border: 1px solid #58a6ff;
-        border-radius: 5px;
-        padding: 3px 10px;
-        font-size: 0.8rem;
-        cursor: pointer;
-    }
-
-    .demo-btn:hover {
-        background: #0055cc;
-    }
+    tr.top3 .rank-col { color: #ffff00; font-size: calc(var(--cell-font) * 1.08); }
 </style>
 
 <!-- Firebase SDK-k -->
@@ -161,10 +142,13 @@
                     <th class="name-col">Név</th>
                     <th class="club-col">Egyesület</th>
                     <th class="total-col">Össz.</th>
-                    <th>S1</th><th>S2</th><th>S3</th><th>S4</th>
-                    <th>Teli</th>
-                    <th>Tarol</th>
-                    <th>Üres</th>
+                    <th class="set-col">S1</th>
+                    <th class="set-col">S2</th>
+                    <th class="set-col">S3</th>
+                    <th class="set-col">S4</th>
+                    <th class="stat-col">Teli</th>
+                    <th class="stat-col">Tarol</th>
+                    <th class="stat-col">Üres</th>
                 </tr>
             </thead>
             <tbody id="boardBody1"></tbody>
@@ -177,19 +161,17 @@
                     <th class="name-col">Név</th>
                     <th class="club-col">Egyesület</th>
                     <th class="total-col">Össz.</th>
-                    <th>S1</th><th>S2</th><th>S3</th><th>S4</th>
-                    <th>Teli</th>
-                    <th>Tarol</th>
-                    <th>Üres</th>
+                    <th class="set-col">S1</th>
+                    <th class="set-col">S2</th>
+                    <th class="set-col">S3</th>
+                    <th class="set-col">S4</th>
+                    <th class="stat-col">Teli</th>
+                    <th class="stat-col">Tarol</th>
+                    <th class="stat-col">Üres</th>
                 </tr>
             </thead>
             <tbody id="boardBody2"></tbody>
         </table>
-    </div>
-
-    <div class="status-bar">
-        <span id="statusText">Csatlakozás a Firebase adatbázishoz (egyeni_bowling)...</span>
-        <button type="button" class="demo-btn" id="loadDemoBtn">24 fős tesztadat betöltése</button>
     </div>
 </div>
 
@@ -203,13 +185,6 @@ const firebaseConfig = {
 };
 
 let lastPlayers = [];
-let hasLiveData = false;
-
-function setStatus(msg, isError = false) {
-    const el = document.getElementById('statusText');
-    el.textContent = msg;
-    el.className = isError ? 'status-error' : '';
-}
 
 function normalizePlayers(rawPlayers) {
     if (!rawPlayers) return [];
@@ -250,60 +225,21 @@ function normalizePlayers(rawPlayers) {
     });
 }
 
-function generateDemoPlayers(count = 24) {
-    const clubs = ['Szeged TE', 'Zalaegerszeg', 'BKV Előre', 'Répcelak', 'Kaposvár', 'Pápai PE'];
-    return Array.from({ length: count }, (_, i) => {
-        const s1 = 130 + ((i * 11) % 40);
-        const s2 = 125 + ((i * 7) % 45);
-        const s3 = 120 + ((i * 13) % 42);
-        const s4 = 128 + ((i * 9) % 38);
-        return {
-            name: `Játékos ${i + 1}`,
-            club: clubs[i % clubs.length],
-            total: s1 + s2 + s3 + s4,
-            sets: [s1, s2, s3, s4],
-            teli: 85 + (i % 30),
-            tarol: 20 + ((i * 3) % 18),
-            ures: i % 8
-        };
-    });
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
 }
+const db = firebase.database();
 
-try {
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
+db.ref('egyeni_bowling').on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (!data) return;
+
+    if (data.title) {
+        document.getElementById('boardTitle').innerText = String(data.title).toUpperCase();
     }
-    const db = firebase.database();
 
-    db.ref('egyeni_bowling').on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (!data) {
-            if (!hasLiveData) {
-                setStatus("A Firebase 'egyeni_bowling' ága jelenleg üres (nincs adat a szerveren).", true);
-            }
-            return;
-        }
-
-        hasLiveData = true;
-        if (data.title) {
-            document.getElementById('boardTitle').innerText = String(data.title).toUpperCase();
-        }
-
-        const normalized = normalizePlayers(data.players || data);
-        lastPlayers = normalized;
-        renderBoard(lastPlayers);
-        setStatus(`Élő adat frissítve – Játékosok száma: ${lastPlayers.length} fő`);
-    }, (error) => {
-        setStatus(`Firebase olvasási hiba: ${error.message}`, true);
-    });
-} catch (err) {
-    setStatus(`Firebase inicializálási hiba: ${err.message}`, true);
-}
-
-document.getElementById('loadDemoBtn').addEventListener('click', () => {
-    lastPlayers = generateDemoPlayers(24);
+    lastPlayers = normalizePlayers(data.players || data);
     renderBoard(lastPlayers);
-    setStatus('24 fős tesztadat megjelenítve (dinamikus méretezés aktív).');
 });
 
 function getSetColorClass(val) {
@@ -329,15 +265,15 @@ function getUresColorClass(val) {
 function updateDynamicSizing(rowsPerCol) {
     const grid = document.getElementById('tableGrid');
     const safeRows = Math.max(rowsPerCol, 1);
-    const headerHeight = 44;
-    const availableBodyHeight = Math.max(grid.clientHeight - headerHeight, 200);
+    const headerHeight = 46;
+    const availableBodyHeight = Math.max(grid.clientHeight - headerHeight, 240);
 
-    const computedRowHeight = Math.min(availableBodyHeight / safeRows, 110);
+    const computedRowHeight = Math.min(availableBodyHeight / safeRows, 120);
 
-    const cellFontPx = Math.max(15, Math.min(computedRowHeight * 0.44, 34));
-    const totalFontPx = cellFontPx * 1.15;
-    const headerFontPx = Math.max(15, Math.min(cellFontPx * 0.92, 26));
-    const padY = Math.max(4, Math.min(computedRowHeight * 0.14, 18));
+    const cellFontPx = Math.max(16, Math.min(computedRowHeight * 0.34, 32));
+    const totalFontPx = cellFontPx * 1.12;
+    const headerFontPx = Math.max(15, Math.min(cellFontPx * 0.85, 24));
+    const padY = Math.max(4, Math.min(computedRowHeight * 0.12, 16));
 
     const root = document.documentElement.style;
     root.setProperty('--row-height', `${computedRowHeight.toFixed(1)}px`);
@@ -378,8 +314,8 @@ function renderBoard(players) {
         if (currentRank <= 3 && player.total > 0) tr.className = 'top3';
 
         const setsHTML = (player.sets || [0, 0, 0, 0]).map(s => {
-            if (!s || s === 0) return `<td>-</td>`;
-            return `<td class="${getSetColorClass(s)}">${s}</td>`;
+            if (!s || s === 0) return `<td class="set-col">-</td>`;
+            return `<td class="set-col ${getSetColorClass(s)}">${s}</td>`;
         }).join('');
 
         const clubText = player.club || '-';
