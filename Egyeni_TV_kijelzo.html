@@ -10,7 +10,7 @@
         --name-font: 1.1rem;
         --club-font: 0.95rem;
         --total-font: 1.25rem;
-        --header-font: 1rem;
+        --header-font: 0.95rem;
         --cell-pad-y: 4px;
     }
 
@@ -84,7 +84,7 @@
     th {
         color: #ffff00;
         border-bottom: 3px solid #0044aa;
-        padding: 6px 3px;
+        padding: 6px 2px;
         font-size: var(--header-font);
         background-color: #001536;
         white-space: nowrap;
@@ -106,7 +106,7 @@
     tbody tr:hover { background-color: rgba(0, 85, 204, 0.3) !important; }
 
     td {
-        padding: var(--cell-pad-y) 3px;
+        padding: var(--cell-pad-y) 2px;
         text-align: center;
         border-bottom: 1px solid #003380;
         font-size: var(--cell-font);
@@ -125,7 +125,7 @@
 
     /* Teljes név kiírása levágás nélkül a saját oszlopán belül */
     .name-col {
-        width: 25%;
+        width: 23%;
         text-align: left;
         font-family: sans-serif;
         color: #ffff00;
@@ -137,7 +137,7 @@
     }
 
     .club-col {
-        width: 17%;
+        width: 15%;
         text-align: left;
         font-family: sans-serif;
         color: #58a6ff;
@@ -150,17 +150,17 @@
     }
 
     .total-col {
-        width: 9%;
+        width: 8.5%;
         font-weight: bold;
         font-size: var(--total-font);
     }
 
     .set-col {
-        width: 6.5%;
+        width: 6%;
     }
 
     .stat-col {
-        width: 6%;
+        width: 8.16%;
         color: #8b949e;
         font-size: var(--cell-font);
     }
@@ -276,23 +276,20 @@ function updateDynamicSizing(players, rowsPerCol) {
     const theadHeight = 42;
     const availableBodyHeight = Math.max(grid.clientHeight - theadHeight - 2, 180);
 
-    // Pontos sormagasság, hogy minden sor beleférjen alul vágás nélkül
     const computedRowHeight = Math.min(availableBodyHeight / safeRows, 100);
     const heightDrivenFont = computedRowHeight * 0.36;
 
-    // Leghosszabb név hossza (pl. "Szabó Zsombor(MESE)" -> ~19 karakter)
     const maxNameLen = players.reduce((max, p) => Math.max(max, String(p.name || '').length), 10);
 
-    // Egy fél tábla szélességéből a .name-col kb. 25%-ot kap
     const halfGridWidth = Math.max(grid.clientWidth / 2 - 9, 360);
-    const nameColPx = halfGridWidth * 0.25 - 8;
+    const nameColPx = halfGridWidth * 0.23 - 8;
     const nameByWidthPx = nameColPx / Math.max(maxNameLen * 0.56, 6);
 
     const nameFontPx = Math.max(12, Math.min(heightDrivenFont, nameByWidthPx, 26));
     const cellFontPx = Math.max(13, Math.min(heightDrivenFont, 25));
     const clubFontPx = Math.max(11, Math.min(cellFontPx * 0.85, 20));
     const totalFontPx = cellFontPx * 1.12;
-    const headerFontPx = Math.max(12, Math.min(cellFontPx * 0.85, 21));
+    const headerFontPx = Math.max(11, Math.min(cellFontPx * 0.78, 19));
     const padY = Math.max(2, Math.min(computedRowHeight * 0.08, 12));
 
     const root = document.documentElement.style;
