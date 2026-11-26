@@ -123,7 +123,6 @@
         text-align: center;
     }
 
-    /* Teljes név kiírása levágás nélkül a saját oszlopán belül */
     .name-col {
         width: 21.5%;
         text-align: left;
@@ -136,7 +135,6 @@
         padding-right: 6px;
     }
 
-    /* Teljes egyesületnév kiírása levágás nélkül */
     .club-col {
         width: 19%;
         text-align: left;
@@ -242,13 +240,19 @@ let lastPlayers = [];
 
 db.ref('egyeni_bowling').on('value', (snapshot) => {
     const data = snapshot.val();
-    if (data) {
-        if (data.title) document.getElementById('boardTitle').innerText = data.title.toUpperCase();
-        if (data.players) {
-            lastPlayers = Array.isArray(data.players) ? data.players : Object.values(data.players);
-            renderBoard(lastPlayers);
-        }
+    console.log('Firebase snapshot:', data);
+    if (!data) return;
+
+    if (data.title) {
+        document.getElementById('boardTitle').innerText = String(data.title).toUpperCase();
     }
+    if (data.players) {
+        const rawList = Array.isArray(data.players) ? data.players : Object.values(data.players);
+        lastPlayers = rawList.filter(Boolean);
+        renderBoard(lastPlayers);
+    }
+}, (err) => {
+    console.error('Firebase listener error:', err);
 });
 
 function getSetColorClass(val) {
@@ -308,30 +312,80 @@ function updateDynamicSizing(players, rowsPerCol) {
 }
 
 function renderBoard(players) {
-    const sorted = [...players].sort((a, b) => {
-        if (b.total !== a.total) return b.total - a.total;
-        if (b.tarol !== a.tarol) return b.tarol - a.tarol;
-        if (a.ures !== b.ures) return a.ures - b.ures;
-        return 0;
-    });
+    try {
+        const sorted = [...players].sort((a, b) => {
+            const bTotal = Number(b.total) || 0;
+            const aTotal = Number(a.total) || 0;
+            if (bTotal !== aTotal) return bTotal - aTotal;
+            const bTarol = Number(b.tarol) || 0;
+            const aTarol = Number(a.tarol) || 0;
+            if (bTarol !== aTarol) return bTarol - aTarol;
+            const aUres = Number(a.ures) || 0;
+            const bUres = Number(b.ures) || 0;
+            if (aUres !== bUres) return aUres - bUres;
+            return 0;
+        });
 
-    const splitIndex = Math.max(1, Math.ceil(sorted.length / 2));
-    updateDynamicSizing(sorted, splitIndex);
+        const splitIndex = Math.max(1, Math.ceil(sorted.length / 2));
+        updateDynamicSizing(sorted, splitIndex);
 
-    const body1 = document.getElementById('boardBody1');
-    const body2 = document.getElementById('boardBody2');
-    body1.innerHTML = '';
-    body2.innerHTML = '';
+        const body1 = document.getElementById('boardBody1');
+        const body2 = document.getElementById('boardBody2');
+        body1.innerHTML = '';
+        body2.innerHTML = '';
 
-    let currentRank = 1;
+        let currentRank = 1;
 
-    sorted.forEach((player, index) => {
-        if (index > 0) {
-            const prev = sorted[index - 1];
-            const isEqual = (player.total === prev.total) &&
-                            (player.tarol === prev.tarol) &&
-                            (player.ures === prev.ures);
-            if (!isEqual) currentRank = index + 1;
-        }
+        sorted.forEach((player, index) => {
+            const pTotal = Number(player.total) || 0;
+            const pTarol = Number(player.tarol) || 0;
+            const pTeli = Number(player.teli) || 0;
+            const pUres = Number(player.ures) || 0;
 
-        const tr = document.createElement('tr');
+            if (index > 0) {
+                const prev = sorted[index - 1];
+                const isEqual = (pTotal === (Number(prev.total) || 0)) &&
+                                (pTarol === (Number(prev.tarol) || 0)) &&
+                                (pUres === (Number(prev.ures) || 0));
+                if (!isEqual) currentRank = index + 1;
+            }
+
+            const tr = document.createElement('tr');
+            if (currentRank <= 3 && pTotal > 0) tr.className = 'top3';
+
+            const setsArr = Array.isArray(player.sets) ? player.sets : [0, 0, 0, 0];
+            const setsHTML = [0, 1, 2, 3].map((i) => {
+                const s = Number(setsArr[i]) || 0;
+                if (s === 0) return `<td class="set-col">-</td>`;
+                return `<td class="set-col ${getSetColorClass(s)}">${s}</td>`;
+            }).join('');
+
+            const clubText = player.club || '-';
+
+            tr.innerHTML = `
+                <td class="rank-col">${currentRank}.</td>
+                <td class="name-col" title="${player.name || ''}">${player.name || '-'}</td>
+                <td class="club-col" title="${clubText}">${clubText}</td>
+                <td class="total-col ${getTotalColorClass(pTotal)}">${pTotal}</td>
+                ${setsHTML}
+                <td class="stat-col">${pTeli}</td>
+                <td class="stat-col">${pTarol}</td>
+                <td class="stat-col ${getUresColorClass(pUres)}">${pUres}</td>
+            `;
+
+            if (index < splitIndex) body1.appendChild(tr);
+            else body2.appendChild(tr);
+        });
+    } catch (e) {
+        console.error('renderBoard error:', e);
+    }
+}
+
+window.addEventListener('resize', () => {
+    if (lastPlayers.length > 0) {
+        renderBoard(lastPlayers);
+    }
+});
+</script>
+</body>
+</html>
