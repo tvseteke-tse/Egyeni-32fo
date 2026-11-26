@@ -7,9 +7,9 @@
     :root {
         --row-height: 50px;
         --cell-font: 1.1rem;
-        --name-font: 1.1rem;
-        --club-font: 0.95rem;
-        --total-font: 1.25rem;
+        --name-font: 1.05rem;
+        --club-font: 0.92rem;
+        --total-font: 1.22rem;
         --header-font: 0.95rem;
         --cell-pad-y: 4px;
     }
@@ -117,7 +117,7 @@
     }
 
     .rank-col {
-        width: 5%;
+        width: 4.5%;
         color: #ffffff;
         font-weight: bold;
         text-align: center;
@@ -125,7 +125,7 @@
 
     /* Teljes név kiírása levágás nélkül a saját oszlopán belül */
     .name-col {
-        width: 23%;
+        width: 21.5%;
         text-align: left;
         font-family: sans-serif;
         color: #ffff00;
@@ -136,8 +136,9 @@
         padding-right: 6px;
     }
 
+    /* Teljes egyesületnév kiírása levágás nélkül */
     .club-col {
-        width: 15%;
+        width: 19%;
         text-align: left;
         font-family: sans-serif;
         color: #58a6ff;
@@ -145,22 +146,22 @@
         font-size: var(--club-font);
         white-space: nowrap;
         overflow: hidden;
-        text-overflow: ellipsis;
+        text-overflow: clip;
         padding-right: 6px;
     }
 
     .total-col {
-        width: 8.5%;
+        width: 8%;
         font-weight: bold;
         font-size: var(--total-font);
     }
 
     .set-col {
-        width: 6%;
+        width: 5.75%;
     }
 
     .stat-col {
-        width: 8.16%;
+        width: 8%;
         color: #8b949e;
         font-size: var(--cell-font);
     }
@@ -280,14 +281,18 @@ function updateDynamicSizing(players, rowsPerCol) {
     const heightDrivenFont = computedRowHeight * 0.36;
 
     const maxNameLen = players.reduce((max, p) => Math.max(max, String(p.name || '').length), 10);
+    const maxClubLen = players.reduce((max, p) => Math.max(max, String(p.club || '').length), 10);
 
     const halfGridWidth = Math.max(grid.clientWidth / 2 - 9, 360);
-    const nameColPx = halfGridWidth * 0.23 - 8;
-    const nameByWidthPx = nameColPx / Math.max(maxNameLen * 0.56, 6);
+    const nameColPx = halfGridWidth * 0.215 - 8;
+    const clubColPx = halfGridWidth * 0.19 - 8;
 
-    const nameFontPx = Math.max(12, Math.min(heightDrivenFont, nameByWidthPx, 26));
+    const nameByWidthPx = nameColPx / Math.max(maxNameLen * 0.56, 6);
+    const clubByWidthPx = clubColPx / Math.max(maxClubLen * 0.54, 6);
+
+    const nameFontPx = Math.max(11, Math.min(heightDrivenFont, nameByWidthPx, 25));
+    const clubFontPx = Math.max(10, Math.min(heightDrivenFont * 0.92, clubByWidthPx, 22));
     const cellFontPx = Math.max(13, Math.min(heightDrivenFont, 25));
-    const clubFontPx = Math.max(11, Math.min(cellFontPx * 0.85, 20));
     const totalFontPx = cellFontPx * 1.12;
     const headerFontPx = Math.max(11, Math.min(cellFontPx * 0.78, 19));
     const padY = Math.max(2, Math.min(computedRowHeight * 0.08, 12));
@@ -330,36 +335,3 @@ function renderBoard(players) {
         }
 
         const tr = document.createElement('tr');
-        if (currentRank <= 3 && player.total > 0) tr.className = 'top3';
-
-        const setsHTML = player.sets.map(s => {
-            if (s === 0) return `<td class="set-col">-</td>`;
-            return `<td class="set-col ${getSetColorClass(s)}">${s}</td>`;
-        }).join('');
-
-        const clubText = player.club || '-';
-
-        tr.innerHTML = `
-            <td class="rank-col">${currentRank}.</td>
-            <td class="name-col" title="${player.name}">${player.name}</td>
-            <td class="club-col" title="${clubText}">${clubText}</td>
-            <td class="total-col ${getTotalColorClass(player.total)}">${player.total}</td>
-            ${setsHTML}
-            <td class="stat-col">${player.teli}</td>
-            <td class="stat-col">${player.tarol}</td>
-            <td class="stat-col ${getUresColorClass(player.ures)}">${player.ures}</td>
-        `;
-
-        if (index < splitIndex) body1.appendChild(tr);
-        else body2.appendChild(tr);
-    });
-}
-
-window.addEventListener('resize', () => {
-    if (lastPlayers.length > 0) {
-        renderBoard(lastPlayers);
-    }
-});
-</script>
-</body>
-</html>
