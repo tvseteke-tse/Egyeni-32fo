@@ -50,6 +50,16 @@
         margin-bottom: 8px; 
         font-weight: bold; 
         color: #8b949e; 
+        min-height: 26px;
+    }
+    .delete-actions {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .confirm-label {
+        font-size: 0.75rem;
+        color: #f85149;
     }
     .delete-player-btn {
         background: #2a1818;
@@ -64,6 +74,18 @@
     .delete-player-btn:hover {
         background: #da3633;
         color: #ffffff;
+    }
+    .cancel-delete-btn {
+        background: #2a2a2a;
+        border: 1px solid #555;
+        color: #c9d1d9;
+        border-radius: 4px;
+        padding: 3px 7px;
+        font-size: 0.75rem;
+        cursor: pointer;
+    }
+    .cancel-delete-btn:hover {
+        background: #3a3a3a;
     }
     .row { display: flex; gap: 5px; align-items: center; margin-bottom: 6px; }
     input[type="text"].p-name, input[type="text"].p-club { 
@@ -125,19 +147,53 @@ function clearCardInputs(card) {
     }
 }
 
-function handleDeleteClick(btn) {
-    const card = btn.closest(".card");
-    if (!card) return;
+function renderDeleteControls(actionsContainer, card) {
+    actionsContainer.innerHTML = "";
 
-    const idx = Number(card.dataset.idx) || 0;
-    const currentName = card.querySelector(".p-name").value.trim();
-    const label = currentName ? '"' + currentName + '" (#' + (idx + 1) + '. játékos)' : '#' + (idx + 1) + '. játékos';
+    const delBtn = document.createElement("button");
+    delBtn.type = "button";
+    delBtn.className = "delete-player-btn";
+    delBtn.textContent = "Törlés";
+    delBtn.onclick = function() {
+        renderConfirmControls(actionsContainer, card);
+    };
 
-    if (window.confirm("Biztosan törölni szeretnéd " + label + " adatait?")) {
+    actionsContainer.appendChild(delBtn);
+}
+
+function renderConfirmControls(actionsContainer, card) {
+    actionsContainer.innerHTML = "";
+
+    const label = document.createElement("span");
+    label.className = "confirm-label";
+    label.textContent = "Biztos?";
+
+    const yesBtn = document.createElement("button");
+    yesBtn.type = "button";
+    yesBtn.className = "delete-player-btn";
+    yesBtn.textContent = "Igen";
+    yesBtn.onclick = function() {
+        const idx = Number(card.dataset.idx) || 0;
+        const currentName = card.querySelector(".p-name").value.trim();
+        const playerLabel = currentName ? '"' + currentName + '" (#' + (idx + 1) + ')' : '#' + (idx + 1) + '. játékos';
+
         clearCardInputs(card);
+        renderDeleteControls(actionsContainer, card);
         sendData();
-        setStatus("Törölve: " + label);
-    }
+        setStatus("Törölve: " + playerLabel);
+    };
+
+    const noBtn = document.createElement("button");
+    noBtn.type = "button";
+    noBtn.className = "cancel-delete-btn";
+    noBtn.textContent = "Mégse";
+    noBtn.onclick = function() {
+        renderDeleteControls(actionsContainer, card);
+    };
+
+    actionsContainer.appendChild(label);
+    actionsContainer.appendChild(yesBtn);
+    actionsContainer.appendChild(noBtn);
 }
 
 function createCards() {
@@ -156,14 +212,12 @@ function createCards() {
         const titleSpan = document.createElement("span");
         titleSpan.textContent = "#" + (i + 1) + " Játékos";
 
-        const delBtn = document.createElement("button");
-        delBtn.type = "button";
-        delBtn.className = "delete-player-btn";
-        delBtn.textContent = "Törlés";
-        delBtn.onclick = function() { handleDeleteClick(this); };
+        const actionsContainer = document.createElement("div");
+        actionsContainer.className = "delete-actions";
+        renderDeleteControls(actionsContainer, card);
 
         header.appendChild(titleSpan);
-        header.appendChild(delBtn);
+        header.appendChild(actionsContainer);
 
         const row = document.createElement("div");
         row.className = "row";
