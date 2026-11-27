@@ -2,58 +2,178 @@
 <html lang="hu">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Egyéni Teke - Színes Ranglista (Online)</title>
 <style>
-    body {
+    :root {
+        --row-height: 48px;
+        --cell-font: 1.05rem;
+        --name-font: 1rem;
+        --club-font: 0.9rem;
+        --total-font: 1.18rem;
+        --header-font: 0.92rem;
+        --cell-pad-y: 4px;
+        --grid-cols: 1fr 1fr;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    html, body {
+        width: 100%;
+        min-height: 100%;
+        margin: 0;
+        padding: 0;
         background-color: #00122e;
         color: #ffff00;
-        margin: 0;
-        padding: 15px;
         font-family: 'Segoe UI', Arial, sans-serif;
         user-select: none;
     }
-    .board-container {
-        max-width: 1550px;
-        margin: 0 auto;
-        background: #001c47;
-        border: 3px solid #0044aa;
-        border-radius: 10px;
-        padding: 15px;
-        box-shadow: 0 0 25px rgba(0, 50, 150, 0.6);
+
+    body {
+        padding: clamp(6px, 1vmin, 16px);
+        min-height: 100dvh;
+        display: flex;
     }
+
+    .board-container {
+        width: 100%;
+        min-height: calc(100dvh - clamp(12px, 2vmin, 32px));
+        background: #001c47;
+        border: clamp(2px, 0.25vmin, 4px) solid #0044aa;
+        border-radius: clamp(8px, 1vmin, 14px);
+        padding: clamp(10px, 1.4vmin, 20px) clamp(10px, 1.6vmin, 24px);
+        box-shadow: 0 0 30px rgba(0, 50, 150, 0.7);
+        display: flex;
+        flex-direction: column;
+    }
+
     h1 {
         text-align: center;
-        margin: 0 0 15px 0;
-        font-size: 2.2rem;
+        margin: 0 0 clamp(8px, 1.2vmin, 16px) 0;
+        font-size: clamp(1.25rem, 2.3vw, 2.5rem);
         color: #ffff00;
-        letter-spacing: 2px;
+        letter-spacing: clamp(1px, 0.15vw, 3px);
         text-transform: uppercase;
-        text-shadow: 0 0 10px rgba(255, 255, 0, 0.4);
+        text-shadow: 0 0 12px rgba(255, 255, 0, 0.5);
+        flex-shrink: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
-    .table-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    table { width: 100%; border-collapse: collapse; font-family: 'Courier New', Courier, monospace; }
-    th { color: #ffff00; border-bottom: 2px solid #0044aa; padding: 8px 2px; font-size: 0.85rem; background-color: #001536; }
-    
-    /* Sorok elkülönítése (Zebra csíkozás és kiemelés) */
-    tbody tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.03); }
-    tbody tr:nth-child(odd) { background-color: rgba(0, 0, 0, 0.2); }
+
+    .table-grid {
+        display: grid;
+        grid-template-columns: var(--grid-cols);
+        gap: clamp(10px, 1.5vw, 24px);
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-x: auto;
+        overflow-y: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: 'Courier New', Courier, monospace;
+        table-layout: fixed;
+    }
+
+    thead tr {
+        height: clamp(32px, 4.2vh, 48px);
+    }
+
+    th {
+        color: #ffff00;
+        border-bottom: 3px solid #0044aa;
+        padding: clamp(4px, 0.6vh, 8px) clamp(2px, 0.3vw, 6px);
+        font-size: var(--header-font);
+        background-color: #001536;
+        white-space: nowrap;
+        text-align: center;
+        overflow: hidden;
+    }
+
+    th.name-col, th.club-col {
+        text-align: left;
+    }
+
+    tbody tr {
+        height: var(--row-height);
+        transition: background-color 0.2s ease;
+    }
+
+    tbody tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.035); }
+    tbody tr:nth-child(odd) { background-color: rgba(0, 0, 0, 0.22); }
     tbody tr:hover { background-color: rgba(0, 85, 204, 0.3) !important; }
 
-    td { padding: 6px 2px; text-align: center; border-bottom: 1px solid #003380; font-size: 1rem; font-weight: bold; }
-    
-    .rank-col { width: 30px; color: #ffffff; font-weight: bold; text-align: center; }
-    .name-col { text-align: left; font-family: sans-serif; color: #ffff00; width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .club-col { text-align: left; font-family: sans-serif; color: #58a6ff; font-weight: normal; font-size: 0.85rem; width: 90px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .stat-col { color: #8b949e; font-size: 0.95rem; }
-    
-    .color-green { color: #00ff66 !important; text-shadow: 0 0 5px rgba(0, 255, 102, 0.4); }
-    .color-yellow { color: #ffff00 !important; text-shadow: 0 0 5px rgba(255, 255, 0, 0.4); }
-    .color-red { color: #ff3333 !important; text-shadow: 0 0 5px rgba(255, 51, 51, 0.4); }
+    td {
+        padding: var(--cell-pad-y) clamp(2px, 0.3vw, 6px);
+        text-align: center;
+        border-bottom: 1px solid #003380;
+        font-size: var(--cell-font);
+        font-weight: bold;
+        line-height: 1.1;
+        white-space: nowrap;
+        overflow: hidden;
+    }
 
-    .total-col { font-weight: bold; font-size: 1.15rem; }
+    .rank-col {
+        width: 5%;
+        color: #ffffff;
+        font-weight: bold;
+        text-align: center;
+    }
+
+    .name-col {
+        width: 22%;
+        text-align: left;
+        font-family: sans-serif;
+        color: #ffff00;
+        font-size: var(--name-font);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: clip;
+        padding-right: 6px;
+    }
+
+    .club-col {
+        width: 19%;
+        text-align: left;
+        font-family: sans-serif;
+        color: #58a6ff;
+        font-weight: normal;
+        font-size: var(--club-font);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: clip;
+        padding-right: 6px;
+    }
+
+    .total-col {
+        width: 8%;
+        font-weight: bold;
+        font-size: var(--total-font);
+    }
+
+    .set-col {
+        width: 5.75%;
+    }
+
+    .stat-col {
+        width: 7.75%;
+        color: #8b949e;
+        font-size: var(--cell-font);
+    }
+
+    .color-green { color: #00ff66 !important; text-shadow: 0 0 6px rgba(0, 255, 102, 0.5); }
+    .color-yellow { color: #ffff00 !important; text-shadow: 0 0 6px rgba(255, 255, 0, 0.5); }
+    .color-red { color: #ff3333 !important; text-shadow: 0 0 6px rgba(255, 51, 51, 0.5); }
+
     tr.top3 { background-color: rgba(0, 68, 170, 0.45) !important; }
     tr.top3:nth-child(even) { background-color: rgba(0, 80, 195, 0.5) !important; }
-    tr.top3 .rank-col { color: #ffff00; font-size: 1.1rem; }
+    tr.top3 .rank-col { color: #ffff00; font-size: calc(var(--cell-font) * 1.06); }
 </style>
 
 <!-- Firebase SDK-k -->
@@ -62,9 +182,9 @@
 </head>
 <body>
 
-<div class="board-container">
+<div class="board-container" id="boardContainer">
     <h1 id="boardTitle">EGYÉNI BAJNOKSÁG</h1>
-    <div class="table-grid">
+    <div class="table-grid" id="tableGrid">
         <table>
             <thead>
                 <tr>
@@ -72,26 +192,32 @@
                     <th class="name-col">Név</th>
                     <th class="club-col">Egyesület</th>
                     <th class="total-col">Össz.</th>
-                    <th>S1</th><th>S2</th><th>S3</th><th>S4</th>
-                    <th>Teli</th>
-                    <th>Tarol</th>
-                    <th>Üres</th>
+                    <th class="set-col">S1</th>
+                    <th class="set-col">S2</th>
+                    <th class="set-col">S3</th>
+                    <th class="set-col">S4</th>
+                    <th class="stat-col">Teli</th>
+                    <th class="stat-col">Tarol</th>
+                    <th class="stat-col">Üres</th>
                 </tr>
             </thead>
             <tbody id="boardBody1"></tbody>
         </table>
 
-        <table>
+        <table id="table2">
             <thead>
                 <tr>
                     <th class="rank-col">#</th>
                     <th class="name-col">Név</th>
                     <th class="club-col">Egyesület</th>
                     <th class="total-col">Össz.</th>
-                    <th>S1</th><th>S2</th><th>S3</th><th>S4</th>
-                    <th>Teli</th>
-                    <th>Tarol</th>
-                    <th>Üres</th>
+                    <th class="set-col">S1</th>
+                    <th class="set-col">S2</th>
+                    <th class="set-col">S3</th>
+                    <th class="set-col">S4</th>
+                    <th class="stat-col">Teli</th>
+                    <th class="stat-col">Tarol</th>
+                    <th class="stat-col">Üres</th>
                 </tr>
             </thead>
             <tbody id="boardBody2"></tbody>
@@ -101,7 +227,7 @@
 
 <script>
 const firebaseConfig = {
-    apiKey: "aizasyd8o7xyctxtjlqcm8z-29xtbopbxrybjom",
+    apiKey: "AIzaSyD8o7xyCtxtjlqcm8z-29xtbopbxrybjom",
     authDomain: "teke-eredmenyek.firebaseapp.com",
     databaseURL: "https://teke-eredmenyek-default-rtdb.firebaseio.com",
     projectId: "teke-eredmenyek",
@@ -113,13 +239,29 @@ if (!firebase.apps.length) {
 }
 const db = firebase.database();
 
+let lastPlayers = [];
+
 db.ref('egyeni_bowling').on('value', (snapshot) => {
     const data = snapshot.val();
-    if (data) {
-        if (data.title) document.getElementById('boardTitle').innerText = data.title.toUpperCase();
-        if (data.players) renderBoard(data.players);
+    console.log('Firebase snapshot:', data);
+    if (!data) return;
+
+    if (data.title) {
+        document.getElementById('boardTitle').innerText = String(data.title).toUpperCase();
     }
+    if (data.players) {
+        const rawList = Array.isArray(data.players) ? data.players : Object.values(data.players);
+        lastPlayers = rawList.filter(Boolean);
+        renderBoard(lastPlayers);
+    }
+}, (err) => {
+    console.error('Firebase listener error:', err);
 });
+
+function isNoShowPlayer(player) {
+    const normalizedName = String(player?.name ?? '').trim().toUpperCase();
+    return normalizedName === 'NEM JELENT MEG';
+}
 
 function getSetColorClass(val) {
     if (val === 0) return '';
@@ -141,54 +283,150 @@ function getUresColorClass(val) {
     return 'color-red';
 }
 
+function updateDynamicSizing(players, totalActiveCount) {
+    const root = document.documentElement.style;
+    const grid = document.getElementById('tableGrid');
+    const table2 = document.getElementById('table2');
+    const titleEl = document.getElementById('boardTitle');
+
+    const viewportW = window.innerWidth || document.documentElement.clientWidth || 1280;
+    const viewportH = window.innerHeight || document.documentElement.clientHeight || 800;
+
+    // Kétoszlopos nézet csak akkor, ha a képernyő elég széles hozzá
+    const useTwoCols = viewportW >= 1100;
+    root.setProperty('--grid-cols', useTwoCols ? 'minmax(0, 1fr) minmax(0, 1fr)' : 'minmax(0, 1fr)');
+    table2.style.display = useTwoCols ? '' : 'none';
+
+    const rowsPerCol = useTwoCols ? Math.max(1, Math.ceil(totalActiveCount / 2)) : Math.max(1, totalActiveCount);
+
+    const titleHeight = titleEl ? titleEl.getBoundingClientRect().height + 16 : 64;
+    const theadHeight = 42;
+    const availableBodyHeight = Math.max(viewportH - titleHeight - theadHeight - 44, 160);
+
+    // Készülékméretből és sorok számából adódó ideális sormagasság
+    const rawRowHeight = availableBodyHeight / rowsPerCol;
+    const minRowHeight = Math.max(26, Math.min(40, viewportH * 0.036));
+    const maxRowHeight = Math.max(52, Math.min(115, viewportH * 0.095));
+    const computedRowHeight = Math.max(minRowHeight, Math.min(rawRowHeight, maxRowHeight));
+
+    const maxNameLen = players.reduce((max, p) => Math.max(max, String(p.name || '').length), 10);
+    const maxClubLen = players.reduce((max, p) => Math.max(max, String(p.club || '').length), 10);
+
+    const activeGridWidth = grid.clientWidth || (viewportW - 36);
+    const singleTableWidth = useTwoCols ? Math.max((activeGridWidth - 24) / 2, 320) : Math.max(activeGridWidth, 320);
+
+    const nameColPx = singleTableWidth * 0.22 - 8;
+    const clubColPx = singleTableWidth * 0.19 - 8;
+
+    const nameByWidthPx = nameColPx / Math.max(maxNameLen * 0.56, 6);
+    const clubByWidthPx = clubColPx / Math.max(maxClubLen * 0.54, 6);
+
+    const heightDrivenFont = computedRowHeight * 0.36;
+    const viewportScale = Math.min(viewportW / 1920, viewportH / 1080);
+    const scaleBoost = viewportScale < 0.75 ? 0.85 : 1;
+
+    const nameFontPx = Math.max(10, Math.min(heightDrivenFont * scaleBoost, nameByWidthPx, 28));
+    const clubFontPx = Math.max(9, Math.min(heightDrivenFont * 0.9 * scaleBoost, clubByWidthPx, 24));
+    const cellFontPx = Math.max(11, Math.min(heightDrivenFont * scaleBoost, 26));
+    const totalFontPx = cellFontPx * 1.12;
+    const headerFontPx = Math.max(10, Math.min(cellFontPx * 0.78, 20));
+    const padY = Math.max(2, Math.min(computedRowHeight * 0.08, 14));
+
+    root.setProperty('--row-height', `${computedRowHeight.toFixed(1)}px`);
+    root.setProperty('--cell-font', `${cellFontPx.toFixed(1)}px`);
+    root.setProperty('--name-font', `${nameFontPx.toFixed(1)}px`);
+    root.setProperty('--club-font', `${clubFontPx.toFixed(1)}px`);
+    root.setProperty('--total-font', `${totalFontPx.toFixed(1)}px`);
+    root.setProperty('--header-font', `${headerFontPx.toFixed(1)}px`);
+    root.setProperty('--cell-pad-y', `${padY.toFixed(1)}px`);
+}
+
 function renderBoard(players) {
-    const sorted = [...players].sort((a, b) => {
-        if (b.total !== a.total) return b.total - a.total;
-        if (b.tarol !== a.tarol) return b.tarol - a.tarol;
-        if (a.ures !== b.ures) return a.ures - b.ures;
-        return 0;
-    });
+    try {
+        const body1 = document.getElementById('boardBody1');
+        const body2 = document.getElementById('boardBody2');
+        body1.innerHTML = '';
+        body2.innerHTML = '';
 
-    const body1 = document.getElementById('boardBody1');
-    const body2 = document.getElementById('boardBody2');
-    body1.innerHTML = '';
-    body2.innerHTML = '';
+        const activePlayers = players.filter((p) => p && !isNoShowPlayer(p));
+        if (activePlayers.length === 0) return;
 
-    let currentRank = 1;
+        const sorted = [...activePlayers].sort((a, b) => {
+            const bTotal = Number(b.total) || 0;
+            const aTotal = Number(a.total) || 0;
+            if (bTotal !== aTotal) return bTotal - aTotal;
+            const bTarol = Number(b.tarol) || 0;
+            const aTarol = Number(a.tarol) || 0;
+            if (bTarol !== aTarol) return bTarol - aTarol;
+            const aUres = Number(a.ures) || 0;
+            const bUres = Number(b.ures) || 0;
+            if (aUres !== bUres) return aUres - bUres;
+            return 0;
+        });
 
-    sorted.forEach((player, index) => {
-        if (index > 0) {
-            const prev = sorted[index - 1];
-            const isEqual = (player.total === prev.total) && 
-                            (player.tarol === prev.tarol) && 
-                            (player.ures === prev.ures);
-            if (!isEqual) currentRank = index + 1;
-        }
+        const useTwoCols = (window.innerWidth || document.documentElement.clientWidth || 1280) >= 1100;
+        const splitIndex = useTwoCols ? Math.max(1, Math.ceil(sorted.length / 2)) : sorted.length;
 
-        const tr = document.createElement('tr');
-        if (currentRank <= 3 && player.total > 0) tr.className = 'top3';
+        updateDynamicSizing(sorted, sorted.length);
 
-        const setsHTML = player.sets.map(s => {
-            if (s === 0) return `<td>-</td>`;
-            return `<td class="${getSetColorClass(s)}">${s}</td>`;
-        }).join('');
+        let currentRank = 1;
 
-        const clubText = player.club || '-';
+        sorted.forEach((player, index) => {
+            const pTotal = Number(player.total) || 0;
+            const pTarol = Number(player.tarol) || 0;
+            const pTeli = Number(player.teli) || 0;
+            const pUres = Number(player.ures) || 0;
 
-        tr.innerHTML = `
-            <td class="rank-col">${currentRank}.</td>
-            <td class="name-col">${player.name}</td>
-            <td class="club-col" title="${clubText}">${clubText}</td>
-            <td class="total-col ${getTotalColorClass(player.total)}">${player.total}</td>
-            ${setsHTML}
-            <td class="stat-col">${player.teli}</td>
-            <td class="stat-col">${player.tarol}</td>
-            <td class="stat-col ${getUresColorClass(player.ures)}">${player.ures}</td>
-        `;
+            if (index > 0) {
+                const prev = sorted[index - 1];
+                const isEqual = (pTotal === (Number(prev.total) || 0)) &&
+                                (pTarol === (Number(prev.tarol) || 0)) &&
+                                (pUres === (Number(prev.ures) || 0));
+                if (!isEqual) currentRank = index + 1;
+            }
 
-        if (index < 16) body1.appendChild(tr);
-        else body2.appendChild(tr);
-    });
+            const tr = document.createElement('tr');
+            if (currentRank <= 3 && pTotal > 0) tr.className = 'top3';
+
+            const setsArr = Array.isArray(player.sets) ? player.sets : [0, 0, 0, 0];
+            const setsHTML = [0, 1, 2, 3].map((i) => {
+                const s = Number(setsArr[i]) || 0;
+                if (s === 0) return `<td class="set-col">-</td>`;
+                return `<td class="set-col ${getSetColorClass(s)}">${s}</td>`;
+            }).join('');
+
+            const clubText = player.club || '-';
+
+            tr.innerHTML = `
+                <td class="rank-col">${currentRank}.</td>
+                <td class="name-col" title="${player.name || ''}">${player.name || '-'}</td>
+                <td class="club-col" title="${clubText}">${clubText}</td>
+                <td class="total-col ${getTotalColorClass(pTotal)}">${pTotal}</td>
+                ${setsHTML}
+                <td class="stat-col">${pTeli}</td>
+                <td class="stat-col">${pTarol}</td>
+                <td class="stat-col ${getUresColorClass(pUres)}">${pUres}</td>
+            `;
+
+            if (!useTwoCols || index < splitIndex) body1.appendChild(tr);
+            else body2.appendChild(tr);
+        });
+    } catch (e) {
+        console.error('renderBoard error:', e);
+    }
+}
+
+function handleViewportChange() {
+    if (lastPlayers.length > 0) {
+        renderBoard(lastPlayers);
+    }
+}
+
+window.addEventListener('resize', handleViewportChange);
+
+if (typeof ResizeObserver !== 'undefined') {
+    const ro = new ResizeObserver(handleViewportChange);
+    ro.observe(document.documentElement);
 }
 </script>
 </body>
